@@ -27,6 +27,10 @@ PETITBOOT_BIOS_XML_METADATA_FILE = \
 PETITBOOT_BIOS_XML_METADATA_INITRAMFS_FILE = \
     $(TARGET_DIR)/usr/share/bios_metadata.xml
 
+ifeq ($(BR2_OPENPOWER_SECUREBOOT_ENABLED),y)
+ATTRIBUTE_COMPILER_SECUREBOOT_OPT=--secureboot
+endif
+
 define FIRESTONE_XML_BUILD_CMDS
         # copy the firestone xml where the common lives
         bash -c 'mkdir -p $(MRW_SCRATCH) && cp -r $(@D)/* $(MRW_SCRATCH)'
@@ -52,7 +56,8 @@ define FIRESTONE_XML_BUILD_CMDS
             --vmm-consts-file=$(MRW_HB_TOOLS)/vmmconst.h --noshort-enums \
             --bios-xml-file=$(FIRESTONE_BIOS_XML_CONFIG_FILE) \
             --bios-schema-file=$(BIOS_SCHEMA_FILE) \
-            --bios-output-file=$(BIOS_XML_METADATA_FILE)
+            --bios-output-file=$(BIOS_XML_METADATA_FILE) \
+ 			$(ATTRIBUTE_COMPILER_SECUREBOOT_OPT)
 
         # Transform BIOS XML into Petitboot specific BIOS XML via the schema
         xsltproc -o \
@@ -63,6 +68,11 @@ endef
 
 define FIRESTONE_XML_INSTALL_IMAGES_CMDS
         mv $(MRW_HB_TOOLS)/targeting.bin $(MRW_HB_TOOLS)/$(BR2_OPENPOWER_TARGETING_BIN_FILENAME)
+		if     [ -n "$(BR2_OPENPOWER_SECUREBOOT_ENABLED)" ] \
+			&& [ "$(BR2_OPENPOWER_SECUREBOOT_ENABLED)" == 'y' ]; then \
+            mv -v $(MRW_HB_TOOLS)/targeting.bin.protected $(MRW_HB_TOOLS)/$(BR2_OPENPOWER_TARGETING_BIN_FILENAME).protected; \
+            mv -v $(MRW_HB_TOOLS)/targeting.bin.unprotected $(MRW_HB_TOOLS)/$(BR2_OPENPOWER_TARGETING_BIN_FILENAME).unprotected; \
+		fi
 endef
 
 define FIRESTONE_XML_INSTALL_TARGET_CMDS
