@@ -38,6 +38,15 @@ ifeq ($(BR2_OPENPOWER_SECUREBOOT_KEY_TRANSITION),y)
 KEY_TRANSITION_ARG=-key_transition
 endif
 
+# PULL REQUEST https://github.com/open-power/op-build/pull/669/files
+# Also adds "release" params to the make directives below.
+# When pull request is accepted, remove the changes
+ifeq ($(BR2_OPENPOWER_POWER9),y)
+    OPENPOWER_RELEASE=p9
+else
+    OPENPOWER_RELEASE=p8
+endif
+
 OPENPOWER_PNOR_INSTALL_IMAGES = YES
 OPENPOWER_PNOR_INSTALL_TARGET = NO
 
@@ -54,6 +63,7 @@ define OPENPOWER_PNOR_INSTALL_IMAGES_CMDS
         mkdir -p $(OPENPOWER_PNOR_SCRATCH_DIR)
 
         $(TARGET_MAKE_ENV) $(@D)/update_image.pl \
+            -release  $(OPENPOWER_RELEASE) \
             -op_target_dir $(HOSTBOOT_IMAGE_DIR) \
             -hb_image_dir $(HOSTBOOT_IMAGE_DIR) \
             -scratch_dir $(OPENPOWER_PNOR_SCRATCH_DIR) \
@@ -69,12 +79,13 @@ define OPENPOWER_PNOR_INSTALL_IMAGES_CMDS
             -openpower_version_filename $(OPENPOWER_PNOR_VERSION_FILE) \
             -payload $(BINARIES_DIR)/$(BR2_SKIBOOT_LID_NAME) \
             -payload_filename $(BR2_SKIBOOT_LID_XZ_NAME) \
-            -pnor_layout $(@D)/$(BR2_OPENPOWER_PNOR_XML_LAYOUT_FILENAME) \
+            -pnor_layout $(@D)/"$(OPENPOWER_RELEASE)"Layouts/$(BR2_OPENPOWER_PNOR_XML_LAYOUT_FILENAME) \
             $(XZ_ARG) $(SECUREBOOT_ARG) $(KEY_TRANSITION_ARG)
 
         mkdir -p $(STAGING_DIR)/pnor/
         $(TARGET_MAKE_ENV) $(@D)/create_pnor_image.pl \
-            -xml_layout_file $(@D)/$(BR2_OPENPOWER_PNOR_XML_LAYOUT_FILENAME) \
+            -release $(OPENPOWER_RELEASE) \
+            -xml_layout_file $(@D)/"$(OPENPOWER_RELEASE)"Layouts/$(BR2_OPENPOWER_PNOR_XML_LAYOUT_FILENAME) \
             -pnor_filename $(STAGING_DIR)/pnor/$(BR2_OPENPOWER_PNOR_FILENAME) \
             -hb_image_dir $(HOSTBOOT_IMAGE_DIR) \
             -scratch_dir $(OPENPOWER_PNOR_SCRATCH_DIR) \
