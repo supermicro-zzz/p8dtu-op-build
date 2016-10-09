@@ -15,6 +15,18 @@ config BR2_PACKAGE_OPENPOWER_PNOR
         help
             Utilites for building a targeting binary image
 
+config BR2_OPENPOWER_SECUREBOOT_ENABLED
+        bool "Securely sign code images"
+        default n
+        help
+            Securely sign code images; Hostboot config must 'set SECUREBOOT'
+
+config BR2_OPENPOWER_SECUREBOOT_KEY_TRANSITION
+        bool "Transition HW key hash"
+        default n
+        help
+            Indicates a key transition will attempt to take place using the SBKT PNOR section
+
 config BR2_OPENPOWER_PNOR_XML_LAYOUT_FILENAME
         string "Name of Openpower pnor xml layout file"
         help
