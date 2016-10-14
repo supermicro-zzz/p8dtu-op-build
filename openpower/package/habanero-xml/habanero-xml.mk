@@ -4,8 +4,8 @@
 #
 ################################################################################
 
-HABANERO_XML_VERSION ?= 5565b8fe1feaa4cdb3b296912069c02f46c4cc59
-HABANERO_XML_SITE ?= $(call github,open-power,habanero-xml,$(HABANERO_XML_VERSION))
+HABANERO_XML_VERSION ?= 7ba1cd906805bd2bbfc2156e81f1922f108b9f06
+HABANERO_XML_SITE ?= $(call github,bofferdn,habanero-xml,$(HABANERO_XML_VERSION))
 
 HABANERO_XML_LICENSE = Apache-2.0
 HABANERO_XML_DEPENDENCIES = hostboot openpower-mrw common-p8-xml
