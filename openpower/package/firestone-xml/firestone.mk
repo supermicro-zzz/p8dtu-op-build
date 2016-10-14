@@ -4,8 +4,8 @@
 #
 ################################################################################
 
-FIRESTONE_XML_VERSION ?= 783df1f6efce8f0283ca6683825578d1a260cad3
-FIRESTONE_XML_SITE ?= $(call github,open-power,firestone-xml,$(FIRESTONE_XML_VERSION))
+FIRESTONE_XML_VERSION ?= 4ed36542a364e9493a01b926e6590bac7851a899
+FIRESTONE_XML_SITE ?= $(call github,bofferdn,firestone-xml,$(FIRESTONE_XML_VERSION))
 
 FIRESTONE_XML_LICENSE = Apache-2.0
 FIRESTONE_XML_DEPENDENCIES = hostboot openpower-mrw common-p8-xml
