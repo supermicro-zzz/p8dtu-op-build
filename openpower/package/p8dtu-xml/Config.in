@@ -1,0 +1,24 @@
+config BR2_PACKAGE_P8DTU_XML
+        bool "p8dtu_xml"
+        default y if (BR2_OPENPOWER_CONFIG_NAME = "p8dtu")
+        select BR2_PACKAGE_COMMON_P8_XML
+        help
+            Utilites for building xml and the targeting binary image
+
+config BR2_P8DTU_SYSTEM_XML_FILENAME
+        string "p8dtu targeting system xml filename"
+        default ""
+        help
+            Defines the name of the system XML filename to be used when creating targeting binary image
+
+config BR2_P8DTU_MRW_XML_FILENAME
+        string "p8dtu targeting mrw xml filename"
+        default ""
+        help
+            Defines the name of the mrw XML filename to be used when creating targeting binary image
+
+config BR2_P8DTU_BIOS_XML_FILENAME
+        string "p8dtu BIOS metadata XML filename"
+        default ""
+        help
+            Defines the name of the BIOS XML filename to parse when generating BIOS metadata
