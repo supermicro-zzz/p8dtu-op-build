@@ -1,0 +1,94 @@
+From 1afc991baf12b50678213b57d9dba3a8102e58c6 Mon Sep 17 00:00:00 2001
+From: Leoluo <leoluo@supermicro.com>
+Date: Tue, 8 Mar 2016 17:01:26 -0800
+Subject: [PATCH] read riser id from CPLD
+
+---
+ src/include/usr/ipmi/ipmiif.H                  |  3 ++
+ src/usr/hwpf/hwp/nest_chiplets/nest_chiplets.C | 41 +++++++++++++++++++++++++-
+ 2 files changed, 43 insertions(+), 1 deletion(-)
+
+diff --git a/src/include/usr/ipmi/ipmiif.H b/src/include/usr/ipmi/ipmiif.H
+index fa13c32..ede4ae3 100644
+--- a/src/include/usr/ipmi/ipmiif.H
++++ b/src/include/usr/ipmi/ipmiif.H
+@@ -231,6 +231,9 @@ namespace IPMI
+     inline const command_t get_capabilities(void)
+     { return std::make_pair(NETFUN_APP, 0x36); }
+ 
++    inline const command_t master_readwrite(void)
++    { return std::make_pair(NETFUN_APP, 0x52); }
++
+ 
+     // Chassis messages
+     inline const command_t chassis_power_off(void)
+diff --git a/src/usr/hwpf/hwp/nest_chiplets/nest_chiplets.C b/src/usr/hwpf/hwp/nest_chiplets/nest_chiplets.C
+index c69c50a..7e867b7 100644
+--- a/src/usr/hwpf/hwp/nest_chiplets/nest_chiplets.C
++++ b/src/usr/hwpf/hwp/nest_chiplets/nest_chiplets.C
+@@ -58,6 +58,8 @@
+ //  MVPD
+ #include <devicefw/userif.H>
+ #include <vpd/mvpdenums.H>
++#include <ipmi/ipmiif.H>
++
+ 
+ #include <config.h>
+ 
+@@ -1735,7 +1737,40 @@ errlHndl_t computeProcPcieConfigAttrs(
+             effectiveLaneSwap[iop] = laneSwap;
+         }
+ #endif
+-
++   uint8_t riser_id = 0 ;
++	errlHndl_t l_err = NULL;
++	
++	
++	size_t len = 4;
++	
++	//create request data buffer
++	uint8_t* data = new uint8_t[len];
++	
++	IPMI::completion_code cc = IPMI::CC_UNKBAD;
++	
++	data[0] = 0x3;  
++	data[1] = 0x70;  
++	data[2] = 0x1;  
++	data[3] = 0x1;  
++	l_err = IPMI::sendrecv(IPMI::master_readwrite(), cc, len, data);
++	
++	if( l_err == NULL )
++	{
++		if( cc == IPMI::CC_OK )
++		{
++		riser_id = data[0];
++		}
++		
++		delete[] data;
++	}
++
++
++       if((i_pProcChipTarget->getAttr<TARGETING::ATTR_HUID>()) == 0x50001 && (riser_id == 0xE) ){	   	
++		effectiveLaneMask[1][0] = 0xFFFF;
++	    effectiveLaneMask[1][1] = 0x0000;      
++          effectiveLaneSwap[1] = 0x0;
++       	}
++	   
+         i_pProcChipTarget->setAttr<
+             TARGETING::ATTR_PROC_PCIE_LANE_MASK>(effectiveLaneMask);
+ 
+@@ -1789,6 +1824,11 @@ errlHndl_t computeProcPcieConfigAttrs(
+             iopConfig = laneConfigItr->laneConfig;
+             phbActiveMask = laneConfigItr->phbActive;
+ 
++			if((i_pProcChipTarget->getAttr<TARGETING::ATTR_HUID>()) == 0x50001 && (riser_id == 0xE) ){
++	   	       iopConfig = 0 ;
++	           phbActiveMask = PHB0_MASK|PHB1_MASK;
++       	      }
++
+             // Disable applicable PHBs
+             phbActiveMask &= (~disabledPhbs);
+             (void)_deconfigPhbsBasedOnPciState(
+-- 
+1.8.4.msysgit.0
+
