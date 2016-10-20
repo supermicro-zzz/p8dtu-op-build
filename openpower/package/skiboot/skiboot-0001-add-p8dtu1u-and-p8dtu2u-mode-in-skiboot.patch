@@ -1,7 +1,7 @@
 From 53329ce2bc6d114c2a2840240d26a325807d224d Mon Sep 17 00:00:00 2001
 From: leoluo <leoluo@supermicro.com>
 Date: Thu, 10 Mar 2016 16:39:38 -0800
-Subject: [PATCH] add p8dtu mode in skiboot
+Subject: [PATCH] add p8dtu1u and p8dtu2u mode in skiboot
 
 ---
  platforms/astbmc/Makefile.inc |   2 +-
@@ -26,7 +26,7 @@ new file mode 100644
 index 0000000..f3c8c12
 --- /dev/null
 +++ b/platforms/astbmc/p8dtu.c
-@@ -0,0 +1,181 @@
+@@ -0,0 +1,260 @@
 +/* Copyright 2016 supermicro.
 + *
 + * Licensed under the Apache License, Version 2.0 (the "License");
@@ -128,7 +128,7 @@ index 0000000..f3c8c12
 +	{ .etype = st_end },
 +};
 +
-+static const struct slot_table_entry p8dtu_phb8_1_slot[] = {
++static const struct slot_table_entry p8dtu2u_phb8_1_slot[] = {
 +	{
 +		.etype = st_pluggable_slot,
 +		.location = ST_LOC_DEVFN(0,0),
@@ -137,7 +137,7 @@ index 0000000..f3c8c12
 +	{ .etype = st_end },
 +};
 +
-+static const struct slot_table_entry p8dtu_phb8_2_slot[] = {
++static const struct slot_table_entry p8dtu2u_phb8_2_slot[] = {
 +	{
 +		.etype = st_pluggable_slot,
 +		.location = ST_LOC_DEVFN(0,0),
@@ -146,7 +146,25 @@ index 0000000..f3c8c12
 +	{ .etype = st_end },
 +};
 +
-+static const struct slot_table_entry p8dtu_phb_table[] = {
++static const struct slot_table_entry p8dtu1u_phb8_1_slot[] = {
++	{
++		.etype = st_pluggable_slot,
++		.location = ST_LOC_DEVFN(0,0),
++		.name = "WIO Slot2",
++	},
++	{ .etype = st_end },
++};
++
++static const struct slot_table_entry p8dtu1u_phb8_2_slot[] = {
++	{
++		.etype = st_pluggable_slot,
++		.location = ST_LOC_DEVFN(0,0),
++		.name = "WIO Slot3",
++	},
++	{ .etype = st_end },
++};
++
++static const struct slot_table_entry p8dtu2u_phb_table[] = {
 +	{
 +		.etype = st_phb,
 +		.location = ST_LOC_PHB(0,0),
@@ -170,32 +188,93 @@ index 0000000..f3c8c12
 +	{
 +		.etype = st_phb,
 +		.location = ST_LOC_PHB(8,1),
-+		.children = p8dtu_phb8_1_slot,
++		.children = p8dtu2u_phb8_1_slot,
 +	},
 +	{
 +		.etype = st_phb,
 +		.location = ST_LOC_PHB(8,2),
-+		.children = p8dtu_phb8_2_slot,
++		.children = p8dtu2u_phb8_2_slot,
 +	},
 +	{ .etype = st_end },
 +};
 +
-+static bool p8dtu_probe(void)
++static const struct slot_table_entry p8dtu1u_phb_table[] = {
++	{
++		.etype = st_phb,
++		.location = ST_LOC_PHB(0,0),
++		.children = p8dtu_phb0_0_slot,
++	},
++	{
++		.etype = st_phb,
++		.location = ST_LOC_PHB(0,1),
++		.children = p8dtu_phb0_1_slot,
++	},
++	{
++		.etype = st_phb,
++		.location = ST_LOC_PHB(0,2),
++		.children = p8dtu_phb0_2_slot,
++	},
++	{
++		.etype = st_phb,
++		.location = ST_LOC_PHB(8,0),
++		.children = p8dtu_phb8_0_slot,
++	},
++	{
++		.etype = st_phb,
++		.location = ST_LOC_PHB(8,1),
++		.children = p8dtu1u_phb8_1_slot,
++	},
++	{
++		.etype = st_phb,
++		.location = ST_LOC_PHB(8,2),
++		.children = p8dtu1u_phb8_2_slot,
++	},
++	{ .etype = st_end },
++};
++
++static bool p8dtu1u_probe(void)
 +{
-+	if (!dt_node_is_compatible(dt_root, "supermicro,p8dtu"))
++	if (!dt_node_is_compatible(dt_root, "supermicro,p8dtu1u"))
 +		return false;
 +
 +	/* Lot of common early inits here */
 +	astbmc_early_init();
-+	slot_table_init(p8dtu_phb_table);
++	slot_table_init(p8dtu1u_phb_table);
++
++	return true;
++}
++
++static bool p8dtu2u_probe(void)
++{
++	if (!dt_node_is_compatible(dt_root, "supermicro,p8dtu2u"))
++		return false;
++
++	/* Lot of common early inits here */
++	astbmc_early_init();
++	slot_table_init(p8dtu2u_phb_table);
 +
 +	return true;
 +}
 +
 +
-+DECLARE_PLATFORM(p8dtu) = {
-+	.name			= "p8dtu",
-+	.probe			= p8dtu_probe,
++DECLARE_PLATFORM(p8dtu1u) = {
++	.name			= "p8dtu1u",
++	.probe			= p8dtu1u_probe,
++	.init			= astbmc_init,
++	.pci_get_slot_info	= slot_table_get_slot_info,
++	.external_irq		= astbmc_ext_irq_serirq_cpld,
++	.cec_power_down         = astbmc_ipmi_power_down,
++	.cec_reboot             = astbmc_ipmi_reboot,
++	.elog_commit		= ipmi_elog_commit,
++	.start_preload_resource	= flash_start_preload_resource,
++	.resource_loaded	= flash_resource_loaded,
++	.exit			= ipmi_wdt_final_reset,
++	.terminate		= ipmi_terminate,
++};
++
++DECLARE_PLATFORM(p8dtu2u) = {
++	.name			= "p8dtu2u",
++	.probe			= p8dtu2u_probe,
 +	.init			= astbmc_init,
 +	.pci_get_slot_info	= slot_table_get_slot_info,
 +	.external_irq		= astbmc_ext_irq_serirq_cpld,
