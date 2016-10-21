@@ -1,0 +1,25 @@
+From de6f3ba0d133290ae6e6c42327f4b542121feb0f Mon Sep 17 00:00:00 2001
+From: LEOLUO <leoluo@supermicro.com>
+Date: Thu, 3 Mar 2016 14:20:09 -0800
+Subject: [PATCH] change return length of IPMI get Device Id command
+
+---
+ discover/platform-powerpc.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/discover/platform-powerpc.c b/discover/platform-powerpc.c
+index 0e3a10b..9835a9f 100644
+--- a/discover/platform-powerpc.c
++++ b/discover/platform-powerpc.c
+@@ -1076,7 +1076,7 @@ static void get_ipmi_bmc_versions(struct platform *p, struct system_info *info)
+ 		pb_debug("\n");
+ 	}
+ 
+-	if (rc == 0 && resp_len == 16) {
++	if (rc == 0 && ((resp_len == 16) | (resp_len == 12) )){
+ 		info->bmc_current = talloc_array(info, char *, 4);
+ 		info->n_bmc_current = 4;
+ 
+-- 
+1.8.4.msysgit.0
+
