@@ -1,0 +1,67 @@
+From 09fa170180b72ade20b20dfe4d0efc389183909d Mon Sep 17 00:00:00 2001
+From: LEOLUO <leoluo@supermicro.com>
+Date: Mon, 4 Apr 2016 11:30:42 -0700
+Subject: [PATCH] VGA handshake with BMC
+
+---
+ ast_main.c | 37 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
+
+diff --git a/drivers/gpu/drm/ast/ast_main.c b/drivers/gpu/drm/ast/ast_main.c
+index e0b4586..8ac87f8 100644
+--- a/drivers/gpu/drm/ast/ast_main.c
++++ b/drivers/gpu/drm/ast/ast_main.c
+@@ -388,6 +388,39 @@ static u32 ast_get_vram_info(struct drm_device *dev)
+ 	return vram_size;
+ }
+ 
++static int ast_bmc_handshake(struct ast_private *ast) {
++	const u8 h2s_addr = 0x9a, s2h_addr = 0xd2;
++	const int handshake_timeout = 10000;
++	u8 soc_reg, last_reg;
++	int retries;
++
++	soc_reg = ast_get_index_reg(ast, AST_IO_CRTC_PORT, s2h_addr);
++	pr_info("%s: soc reg: %02x\n", __func__, soc_reg);
++	if (!(soc_reg & 0x1))
++		return 0;
++
++	last_reg = soc_reg;
++
++	ast_set_index_reg(ast, AST_IO_CRTC_PORT, h2s_addr, 0x01);
++
++	for (retries = 0; retries < handshake_timeout; retries++) {
++		soc_reg = ast_get_index_reg(ast, AST_IO_CRTC_PORT, s2h_addr);
++		if (soc_reg != last_reg) {
++			pr_info("%s: change %02x\n", __func__, soc_reg);
++			last_reg = soc_reg;
++		}
++		if (!(soc_reg & 0x1)){
++		    ast_set_index_reg(ast, AST_IO_CRTC_PORT, h2s_addr, 0x00);
++			return 0;
++		}
++
++		msleep(10);
++	}
++
++	DRM_ERROR("Failed to complete BMC handshake");
++	return -EIO;
++}
++
+ int ast_driver_load(struct drm_device *dev, unsigned long flags)
+ {
+ 	struct ast_private *ast;
+@@ -434,6 +467,10 @@ int ast_driver_load(struct drm_device *dev, unsigned long flags)
+ 		DRM_INFO("dram %d %d %d %08x\n", ast->mclk, ast->dram_type, ast->dram_bus_width, ast->vram_size);
+ 	}
+ 
++	ret = ast_bmc_handshake(ast);
++	if (ret)
++		goto out_free;
++
+ 	if (need_post)
+ 		ast_post_gpu(dev);
+ 
+-- 
+1.8.4.msysgit.0
+
