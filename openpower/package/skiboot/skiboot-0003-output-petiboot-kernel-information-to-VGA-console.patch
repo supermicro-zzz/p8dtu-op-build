@@ -1,0 +1,25 @@
+From 946f335bc03fc97756b28024eac07bb1ab7765dd Mon Sep 17 00:00:00 2001
+From: leoluo <leoluo@supermicro.com>
+Date: Tue, 12 Apr 2016 18:35:29 -0700
+Subject: [PATCH] output information to VGA console
+
+---
+ include/config.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/config.h b/include/config.h
+index 2524570..53626b6 100644
+--- a/include/config.h
++++ b/include/config.h
+@@ -89,7 +89,7 @@
+ /* Configure this to provide some additional kernel command line
+  * arguments to the bootloader
+  */
+-//#define KERNEL_COMMAND_LINE	"debug"
++#define KERNEL_COMMAND_LINE	"console=hvc0 console=tty1"
+ 
+ #endif /* __CONFIG_H */
+ 
+-- 
+1.8.4.msysgit.0
+
