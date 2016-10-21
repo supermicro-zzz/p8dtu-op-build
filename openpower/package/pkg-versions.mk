@@ -193,12 +193,12 @@ cd "$$(BR2_EXTERNAL)"; git describe --all --dirty | grep -e "-dirty" | sed 's/.*
 fi
 
 # Include the currently checked-out buildroot version
-echo -n "	buildroot-" >> $$($$(UPPER_CASE_PKG)_VERSION_FILE);
-cd "./buildroot"; (git describe --tags || git log -n1 --pretty=format:'%h' || echo "unknown") \
-	| sed 's/\(.*\)-g\([0-9a-f]\{7\}\).*/\2/' | xargs echo -n \
-	>> $$($$(UPPER_CASE_PKG)_VERSION_FILE); \
-git describe --all --dirty | grep -e "-dirty" | sed 's/.*\(-dirty\)/\1/' | \
-	xargs echo >> $$($$(UPPER_CASE_PKG)_VERSION_FILE);
+#echo -n "	buildroot-" >> $$($$(UPPER_CASE_PKG)_VERSION_FILE);
+#cd "./buildroot"; (git describe --tags || git log -n1 --pretty=format:'%h' || echo "unknown") \
+#	| sed 's/\(.*\)-g\([0-9a-f]\{7\}\).*/\2/' | xargs echo -n \
+#	>> $$($$(UPPER_CASE_PKG)_VERSION_FILE); \
+#git describe --all --dirty | grep -e "-dirty" | sed 's/.*\(-dirty\)/\1/' | \
+#	xargs echo >> $$($$(UPPER_CASE_PKG)_VERSION_FILE);
 
 
 # Combing subpackage version files into $$($$(UPPER_CASE_PKG)_VERSION_FILE)
