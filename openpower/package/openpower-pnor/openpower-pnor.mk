@@ -79,6 +79,8 @@ define OPENPOWER_PNOR_INSTALL_IMAGES_CMDS
             -openpower_version_filename $(OPENPOWER_PNOR_VERSION_FILE) \
             -payload $(BINARIES_DIR)/$(BR2_SKIBOOT_LID_NAME) \
             -payload_filename $(BR2_SKIBOOT_LID_XZ_NAME) \
+            -binary_dir $(BINARIES_DIR) \
+            -bootkernel_filename $(LINUX_IMAGE_NAME) \
             -pnor_layout $(@D)/"$(OPENPOWER_RELEASE)"Layouts/$(BR2_OPENPOWER_PNOR_XML_LAYOUT_FILENAME) \
             $(XZ_ARG) $(SECUREBOOT_ARG) $(KEY_TRANSITION_ARG)
 
@@ -91,7 +93,7 @@ define OPENPOWER_PNOR_INSTALL_IMAGES_CMDS
             -scratch_dir $(OPENPOWER_PNOR_SCRATCH_DIR) \
             -outdir $(STAGING_DIR)/pnor/ \
             -payload $(OPENPOWER_PNOR_SCRATCH_DIR)/$(BR2_SKIBOOT_LID_XZ_NAME) \
-            -bootkernel $(BINARIES_DIR)/$(LINUX_IMAGE_NAME) \
+            -bootkernel $(OPENPOWER_PNOR_SCRATCH_DIR)/$(LINUX_IMAGE_NAME) \
             -sbe_binary_filename $(BR2_HOSTBOOT_BINARY_SBE_FILENAME) \
             -sbec_binary_filename $(BR2_HOSTBOOT_BINARY_SBEC_FILENAME) \
             -wink_binary_filename $(BR2_HOSTBOOT_BINARY_WINK_FILENAME) \
