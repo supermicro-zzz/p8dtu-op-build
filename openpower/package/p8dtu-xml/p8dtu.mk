@@ -5,7 +5,7 @@
 ################################################################################
 P8DTU_XML_VERSION ?= 8afba92270f895cdb25f90c69bf37ad274763212
 P8DTU_XML_SITE_METHOD = git
-P8DTU_XML_SITE = git@172.31.32.149:openpower/p8dtu-xml.git
+P8DTU_XML_SITE = git@github.com:supermicro/p8dtu-xml.git
 #P8DTU_XML_SITE ?= $(call github,open-power,firestone-xml,$(FIRESTONE_XML_VERSION))
 
 P8DTU_XML_LICENSE = Apache-2.0
