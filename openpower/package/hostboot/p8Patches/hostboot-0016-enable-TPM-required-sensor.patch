@@ -1,0 +1,25 @@
+From a2947a1d2221b3c26fa9640af882fa6dea0ca34e Mon Sep 17 00:00:00 2001
+From: jim <jim.yuan@supermicro.com>
+Date: Thu, 27 Oct 2016 10:42:48 -0700
+Subject: [PATCH] enable TPM required sensor.
+
+---
+ src/usr/targeting/common/xmltohb/attribute_types_hb.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/usr/targeting/common/xmltohb/attribute_types_hb.xml b/src/usr/targeting/common/xmltohb/attribute_types_hb.xml
+index 3cfdb9a..84536fb 100644
+--- a/src/usr/targeting/common/xmltohb/attribute_types_hb.xml
++++ b/src/usr/targeting/common/xmltohb/attribute_types_hb.xml
+@@ -1200,7 +1200,7 @@
+     </enumerator>
+     <enumerator>
+         <name>TPM_REQUIRED</name>
+-        <value>0xFFFF</value>
++        <value>0xCC03</value>
+     </enumerator>
+ </enumerationType>
+ 
+-- 
+2.9.2.windows.1
+
