@@ -1,0 +1,42 @@
+Signed-off-by: Sreekanth Reddy <Sreekanth.Reddy@broadcom.com>
+---
+ block/genhd.c    |  1 +
+ mm/backing-dev.c | 10 +++++-----
+ 2 files changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/block/genhd.c b/block/genhd.c
+index fcd6d4f..b95f2fa 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -656,6 +656,7 @@ void del_gendisk(struct gendisk *disk)
+ 	disk->flags &= ~GENHD_FL_UP;
+ 
+ 	sysfs_remove_link(&disk_to_dev(disk)->kobj, "bdi");
++	bdi_unregister(&disk->queue->backing_dev_info);
+ 	blk_unregister_queue(disk);
+ 	blk_unregister_region(disk_devt(disk), disk->minors);
+ 
+diff --git a/mm/backing-dev.c b/mm/backing-dev.c
+index 8fde443..80a64f0 100644
+--- a/mm/backing-dev.c
++++ b/mm/backing-dev.c
+@@ -853,12 +853,12 @@ static void bdi_remove_from_list(struct backing_dev_info *bdi)
+ 
+ void bdi_unregister(struct backing_dev_info *bdi)
+ {
+-	/* make sure nobody finds us on the bdi_list anymore */
+-	bdi_remove_from_list(bdi);
+-	wb_shutdown(&bdi->wb);
+-	cgwb_bdi_destroy(bdi);
+-
+ 	if (bdi->dev) {
++		/* make sure nobody finds us on the bdi_list anymore */
++		bdi_remove_from_list(bdi);
++		wb_shutdown(&bdi->wb);
++		cgwb_bdi_destroy(bdi);
++
+ 		bdi_debug_unregister(bdi);
+ 		device_unregister(bdi->dev);
+ 		bdi->dev = NULL;
+-- 
+2.4.3
