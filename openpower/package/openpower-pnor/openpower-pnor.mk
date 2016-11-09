@@ -34,8 +34,12 @@ OPENPOWER_PNOR_DEPENDENCIES += host-sb-signing-utils
 SECUREBOOT_ARG =-secureboot
 endif
 
-ifeq ($(BR2_OPENPOWER_SECUREBOOT_KEY_TRANSITION),y)
-KEY_TRANSITION_ARG=-key_transition
+ifneq ($(BR2_OPENPOWER_SECUREBOOT_KEY_TRANSITION),"")
+KEY_TRANSITION_ARG=-key_transition $(BR2_OPENPOWER_SECUREBOOT_KEY_TRANSITION)
+endif
+
+ifneq ($(BR2_OPENPOWER_SECUREBOOT_SIGN_MODE),"")
+SIGN_MODE_ARG=-sign_mode $(BR2_OPENPOWER_SECUREBOOT_SIGN_MODE)
 endif
 
 # PULL REQUEST https://github.com/open-power/op-build/pull/669/files
@@ -82,7 +86,8 @@ define OPENPOWER_PNOR_INSTALL_IMAGES_CMDS
             -binary_dir $(BINARIES_DIR) \
             -bootkernel_filename $(LINUX_IMAGE_NAME) \
             -pnor_layout $(@D)/"$(OPENPOWER_RELEASE)"Layouts/$(BR2_OPENPOWER_PNOR_XML_LAYOUT_FILENAME) \
-            $(XZ_ARG) $(SECUREBOOT_ARG) $(KEY_TRANSITION_ARG)
+			-sb_signing_config_file $(BR2_SB_SIGNING_UTILS_CONFIG_FILE) \
+            $(XZ_ARG) $(SECUREBOOT_ARG) $(KEY_TRANSITION_ARG) $(SIGN_MODE_ARG) \
 
         mkdir -p $(STAGING_DIR)/pnor/
         $(TARGET_MAKE_ENV) $(@D)/create_pnor_image.pl \
