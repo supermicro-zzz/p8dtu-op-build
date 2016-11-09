@@ -3,6 +3,7 @@ From: leoluo <leoluo@supermicro.com>
 Date: Thu, 17 Mar 2016 14:25:24 -0700
 Subject: [PATCH] change OPAL esel command to IBM 0x3a
 
+Signed-off-by: Jim Yuan <jim.yuan@supermicro.com>
 ---
  include/ipmi.h | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

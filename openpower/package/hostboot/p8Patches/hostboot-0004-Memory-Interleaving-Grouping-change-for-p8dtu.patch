@@ -4,6 +4,7 @@ Date: Tue, 18 Oct 2016 16:08:13 -0700
 Subject: [PATCH 1/2] Memory Interleaving Grouping change for p8dtu. Allow not
  adjacent pair for p8dtu.
 
+Signed-off-by: Jim Yuan <jim.yuan@supermicro.com>
 ---
  src/usr/targeting/common/xmltohb/attribute_types.xml | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

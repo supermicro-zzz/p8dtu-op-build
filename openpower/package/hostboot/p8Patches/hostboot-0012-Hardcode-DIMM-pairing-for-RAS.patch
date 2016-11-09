@@ -4,6 +4,7 @@ Date: Thu, 7 Jul 2016 15:53:31 -0700
 Subject: [PATCH] Hardcode DIMM pairing for RAS. Fix the issue that MBA0 Memory
  UE on Cenatur Chip4 brought all dimms under Proc2 offline.
 
+Signed-off-by: Jim Yuan <jim.yuan@supermicro.com>
 ---
  src/usr/hwas/common/deconfigGard.C | 19 ++++++++++++++++++-
  1 file changed, 18 insertions(+), 1 deletion(-)

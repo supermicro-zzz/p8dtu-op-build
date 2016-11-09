@@ -4,6 +4,7 @@ Date: Wed, 25 May 2016 15:24:40 -0700
 Subject: [PATCH] Fill board mfg time and date in FRU3. It is read from
  PVPD:VNDR:IN.
 
+Signed-off-by: Jim Yuan <jim.yuan@supermicro.com>
 ---
  src/usr/ipmi/ipmifruinv.C | 51 ++++++++++++++++++++++++++++++++++++++++++++---
  1 file changed, 48 insertions(+), 3 deletions(-)

@@ -4,6 +4,7 @@ Date: Wed, 27 Jul 2016 16:22:31 -0700
 Subject: [PATCH] always return success for VPD write. patch github issue #114
  for P8DTU.
 
+Signed-off-by: Jim Yuan <jim.yuan@supermicro.com>
 ---
  src/usr/vpd/runtime/rt_vpd.C | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)

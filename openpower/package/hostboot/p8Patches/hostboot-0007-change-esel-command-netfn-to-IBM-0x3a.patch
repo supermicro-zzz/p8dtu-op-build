@@ -3,6 +3,7 @@ From: jim <jim.yuan@supermicro.com>
 Date: Tue, 11 Oct 2016 10:00:15 -0700
 Subject: [PATCH] change esel command netfn to IBM 0x3a
 
+Signed-off-by: Jim Yuan <jim.yuan@supermicro.com>
 ---
  src/include/usr/ipmi/ipmiif.H | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

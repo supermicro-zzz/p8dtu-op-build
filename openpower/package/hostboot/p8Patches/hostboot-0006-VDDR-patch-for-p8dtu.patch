@@ -3,6 +3,7 @@ From: jim <jim.yuan@supermicro.com>
 Date: Tue, 4 Oct 2016 16:07:44 -0700
 Subject: [PATCH] VDDR patch for p8dtu.
 
+Signed-off-by: Jim Yuan <jim.yuan@supermicro.com>
 ---
  src/usr/hwpf/hwp/dram_training/palmetto_vddr.C | 4 ++++
  1 file changed, 4 insertions(+)

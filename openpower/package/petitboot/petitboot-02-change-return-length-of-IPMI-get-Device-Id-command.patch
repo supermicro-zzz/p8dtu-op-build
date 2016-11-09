@@ -3,6 +3,7 @@ From: LEOLUO <leoluo@supermicro.com>
 Date: Thu, 3 Mar 2016 14:20:09 -0800
 Subject: [PATCH] change return length of IPMI get Device Id command
 
+Signed-off-by: Jim Yuan <jim.yuan@supermicro.com>
 ---
  discover/platform-powerpc.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

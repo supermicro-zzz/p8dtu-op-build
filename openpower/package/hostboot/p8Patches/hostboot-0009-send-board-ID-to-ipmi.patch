@@ -3,6 +3,7 @@ From: jim <jim.yuan@supermicro.com>
 Date: Tue, 11 Oct 2016 10:26:14 -0700
 Subject: [PATCH] send board ID to ipmi
 
+Signed-off-by: Jim Yuan <jim.yuan@supermicro.com>
 ---
  src/include/usr/ipmi/ipmiif.H                      |  6 ++++-
  src/include/usr/ipmi/ipmipowerstate.H              |  2 +-
