@@ -3,6 +3,7 @@ From: Leoluo <leoluo@supermicro.com>
 Date: Tue, 8 Mar 2016 17:01:26 -0800
 Subject: [PATCH] read riser id from CPLD
 
+Signed-off-by: Jim Yuan <jim.yuan@supermicro.com>
 ---
  src/include/usr/ipmi/ipmiif.H                  |  3 ++
  src/usr/hwpf/hwp/nest_chiplets/nest_chiplets.C | 41 +++++++++++++++++++++++++-

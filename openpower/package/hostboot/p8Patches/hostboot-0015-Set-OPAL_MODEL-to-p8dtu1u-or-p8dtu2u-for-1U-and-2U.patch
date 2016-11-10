@@ -3,6 +3,7 @@ From: jim <jim.yuan@supermicro.com>
 Date: Wed, 10 Aug 2016 10:41:32 -0700
 Subject: [PATCH] Set OPAL_MODEL to p8dtu1u or p8dtu2u for 1U and 2U system.
 
+Signed-off-by: Jim Yuan <jim.yuan@supermicro.com>
 ---
  src/usr/hwpf/hwp/start_payload/start_payload.C     | 66 +++++++++++++++++++++-
  .../common/xmltohb/attribute_types_hb.xml          |  1 +

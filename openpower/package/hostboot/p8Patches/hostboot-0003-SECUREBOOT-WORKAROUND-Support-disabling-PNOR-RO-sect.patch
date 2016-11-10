@@ -1,0 +1,51 @@
+From 99b7c9d99374b7ab9a298113cc76d14eb8646f8d Mon Sep 17 00:00:00 2001
+From: Nick Bofferding <bofferdn@us.ibm.com>
+Date: Mon, 24 Oct 2016 09:46:14 -0500
+Subject: [PATCH] SECUREBOOT: WORKAROUND: Support disabling PNOR RO sections
+
+- Added new PNOR_DISABLE_READ_ONLY_SUPPORT config option (defaults to  n)
+- Updated PNOR to ignore RO if new option turned on (except test partition)
+
+Change-Id: I84c3c998686755e47eab125f11ef63252c60f42d
+---
+ src/usr/pnor/HBconfig      | 7 +++++++
+ src/usr/pnor/pnor_common.C | 8 +++++++-
+ 2 files changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/src/usr/pnor/HBconfig b/src/usr/pnor/HBconfig
+index b5a2660..8e3a519 100644
+--- a/src/usr/pnor/HBconfig
++++ b/src/usr/pnor/HBconfig
+@@ -49,3 +49,10 @@ config PNOR_INIT_FOUR_BYTE_ADDR
+     depends on !BMC_DOES_SFC_INIT
+     help
+         PNOR starts out in 3-byte address mode, hostboot must enable 4-byte mode.
++
++config PNOR_DISABLE_READ_ONLY_SUPPORT
++    default n
++    help
++        Forcibly disables read-only PNOR sections and makes them writeable (except for test partitions)
++
++
+diff --git a/src/usr/pnor/pnor_common.C b/src/usr/pnor/pnor_common.C
+index 98cea7c..cb1b2c8 100644
+--- a/src/usr/pnor/pnor_common.C
++++ b/src/usr/pnor/pnor_common.C
+@@ -496,7 +496,13 @@ errlHndl_t PNOR::parseTOC(uint8_t* i_toc0Buffer, uint8_t* i_toc1Buffer,
+ 
+ #ifndef __HOSTBOOT_RUNTIME
+                     // Handle section permissions
+-                    if (o_TOC[secId].misc & FFS_MISC_READ_ONLY)
++                    bool supportReadOnlySections = true;
++                    #ifdef CONFIG_PNOR_DISABLE_READ_ONLY_SUPPORT
++                    supportReadOnlySections = false;
++                    #endif
++                    if (   (   (supportReadOnlySections)
++                            || (secId==PNOR::TESTRO))
++                        && (o_TOC[secId].misc & FFS_MISC_READ_ONLY))
+                     {
+                         // Need to set permissions to allow writing to virtual
+                         // addresses, but prevents the kernel from ejecting
+-- 
+1.8.2.2
+

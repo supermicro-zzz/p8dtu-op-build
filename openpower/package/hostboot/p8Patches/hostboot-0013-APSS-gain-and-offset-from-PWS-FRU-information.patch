@@ -3,6 +3,7 @@ From: jim <jim.yuan@supermicro.com>
 Date: Fri, 22 Jul 2016 17:50:57 -0700
 Subject: [PATCH] Adjust APSS gain and offset from PWS FRU information.
 
+Signed-off-by: Jim Yuan <jim.yuan@supermicro.com>
 ---
  src/include/usr/ipmi/ipmiif.H                      |   3 +
  src/usr/htmgt/htmgt_cfgdata.C                      |   2 +
