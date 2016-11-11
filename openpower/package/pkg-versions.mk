@@ -140,6 +140,9 @@ endef
 define OPENPOWER_VERSION
 
 UPPER_CASE_PKG = $(call UPPERCASE,$(1))
+UPPER_CASE_SIGN_MODE = $(call UPPERCASE,$$(BR2_OPENPOWER_SECUREBOOT_SIGN_MODE))
+UPPER_CASE_SECUREBOOT = $(call UPPERCASE,$$(BR2_OPENPOWER_SECUREBOOT_ENABLED))
+
 $$(UPPER_CASE_PKG)_VERSION_FILE = $$(OPENPOWER_VERSION_DIR)/$(1).version.txt
 
 
@@ -178,6 +181,12 @@ fi
 # Check if op-build is dirty
 cd "$$(BR2_EXTERNAL)"; git describe --all --dirty | grep -e "-dirty" | sed 's/.*\(-dirty\)/\1/' | \
 	xargs echo -n >> $$($$(UPPER_CASE_PKG)_VERSION_FILE);
+
+# Flag whether op-build is production signed
+if     [ "$$(UPPER_CASE_SECUREBOOT)" == 'Y' ] \
+	&& [ "$$(UPPER_CASE_SIGN_MODE)" == 'PRODUCTION' ]; then \
+	echo -n "-prod" >> $$($$(UPPER_CASE_PKG)_VERSION_FILE); \
+fi
 
 # Add new line to $$($$(UPPER_CASE_PKG)_VERSION_FILE)
 echo "" >> $$($$(UPPER_CASE_PKG)_VERSION_FILE);
