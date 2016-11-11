@@ -1,0 +1,35 @@
+From b2811088671a0b1792099e2648afd9913ef552af Mon Sep 17 00:00:00 2001
+From: Nick Bofferding <bofferdn@us.ibm.com>
+Date: Tue, 8 Nov 2016 20:23:40 -0600
+Subject: [PATCH] Ignore secure header on runtime PNOR sections
+
+Change-Id: Ia05b91f51b4c33e53d0817e323bb359e6978a6b6
+---
+ src/usr/pnor/runtime/rt_pnor.C | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/src/usr/pnor/runtime/rt_pnor.C b/src/usr/pnor/runtime/rt_pnor.C
+index d1b5a31..6178507 100644
+--- a/src/usr/pnor/runtime/rt_pnor.C
++++ b/src/usr/pnor/runtime/rt_pnor.C
+@@ -210,6 +210,17 @@ errlHndl_t RtPnor::getSectionInfo(PNOR::SectionId i_section,
+             (iv_TOC[i_section].version & FFS_VERS_SHA512) ? true : false;
+         o_info.sha512perEC  =
+            (iv_TOC[i_section].version & FFS_VERS_SHA512_PER_EC) ? true : false;
++
++        #ifdef CONFIG_SECUREBOOT
++        // We don't verify PNOR sections at runtime for P8, but we
++        // still have to bypass the secure header
++        if(PNOR::isSecureSection(i_section))
++        {
++            o_info.vaddr += PAGESIZE;
++            o_info.size -= PAGESIZE;
++        }
++        #endif
++
+     } while (0);
+ 
+     TRACFCOMP(g_trac_pnor, EXIT_MRK"RtPnor::getSectionInfo");
+-- 
+1.8.2.2
+
