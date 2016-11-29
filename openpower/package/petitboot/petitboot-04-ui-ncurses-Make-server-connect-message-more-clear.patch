@@ -1,0 +1,41 @@
+From 6c30ea4386c3ba75ceacd0d183b6f75d380a6e31 Mon Sep 17 00:00:00 2001
+From: Samuel Mendoza-Jonas <sam@mendozajonas.com>
+Date: Tue, 22 Nov 2016 14:54:32 -0800
+Subject: [PATCH] ui/ncurses: Make server connect message more clear
+
+The current message mentions a "server" which can give the misleading
+impression that the UI is waiting for a remote network server. The delay
+is actually in waiting for the pb-discover process to be ready, so
+update the message to reflect that.
+
+Signed-off-by: Samuel Mendoza-Jonas <sam@mendozajonas.com>
+---
+ ui/ncurses/nc-cui.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/ui/ncurses/nc-cui.c b/ui/ncurses/nc-cui.c
+index c2f1c83..972d9eb 100644
+--- a/ui/ncurses/nc-cui.c
++++ b/ui/ncurses/nc-cui.c
+@@ -951,13 +951,15 @@ static int cui_server_wait(void *arg)
+ 	if (!cui->client) {
+ 		waiter_register_timeout(cui->waitset, 1000, cui_server_wait,
+ 					cui);
+-		nc_scr_status_printf(cui->current, "Info: Waiting for server");
++		nc_scr_status_printf(cui->current,
++							 "Info: Waiting for device discovery");
+ 	} else {
+-		nc_scr_status_printf(cui->current, "Info: Connected to server!");
++		nc_scr_status_printf(cui->current,
++							 "Info: Connected to pb-discover!");
+ 		talloc_steal(cui, cui->client);
+ 
+ 		if (cui->has_input) {
+-			pb_log("Aborting default boot on server connect\n");
++			pb_log("Aborting default boot on pb-discover connect\n");
+ 			discover_client_cancel_default(cui->client);
+ 		}
+ 	}
+-- 
+2.9.2.windows.1
+
