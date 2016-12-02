@@ -1,0 +1,78 @@
+From 34cf77ce5c80f92042cc5fcc9b1413926b0dde8d Mon Sep 17 00:00:00 2001
+From: Joel Stanley <joel@jms.id.au>
+Date: Wed, 21 Sep 2016 13:49:49 +0930
+Subject: [PATCH] xchi: Add quirk to delay halting of controller
+
+Mathias Nyman <mathias.nyman@linux.intel.com> wrote:
+> TI TUSB 73x0 USB3.0 xHCI host has an issue with halting.
+>
+> Errata says host needs 125us to 1ms between the last control transfer
+> and clearing the run/stop bit. (halting the host)
+>
+> Suggested workaround is to wait at least 2ms before halting the host.
+>
+> See issue #10 in:
+> http://www.ti.com/lit/er/sllz076/sllz076.pdf
+
+This patch adds a quirk and performs a msleep of 2ms before performing
+the xhci_halt.
+
+Signed-off-by: Joel Stanley <joel@jms.id.au>
+---
+ drivers/usb/host/xhci-pci.c | 4 ++++
+ drivers/usb/host/xhci.c     | 4 ++++
+ drivers/usb/host/xhci.h     | 5 +++++
+ 3 files changed, 13 insertions(+)
+
+diff --git a/drivers/usb/host/xhci-pci.c b/drivers/usb/host/xhci-pci.c
+index 1835f1c30031..a64bef422208 100644
+--- a/drivers/usb/host/xhci-pci.c
++++ b/drivers/usb/host/xhci-pci.c
+@@ -193,6 +193,10 @@ static void xhci_pci_quirks(struct device *dev, struct xhci_hcd *xhci)
+ 	if (xhci->quirks & XHCI_RESET_ON_RESUME)
+ 		xhci_dbg_trace(xhci, trace_xhci_dbg_quirks,
+ 				"QUIRK: Resetting on resume");
++
++	if (pdev->vendor == PCI_VENDOR_ID_TI &&
++			pdev->device == 0x8241)
++		xhci->quirks |= XHCI_HALT_DELAY_QUIRK;
+ }
+ 
+ #ifdef CONFIG_ACPI
+diff --git a/drivers/usb/host/xhci.c b/drivers/usb/host/xhci.c
+index 01d96c9b3a75..16ffd1ae9be0 100644
+--- a/drivers/usb/host/xhci.c
++++ b/drivers/usb/host/xhci.c
+@@ -109,6 +109,10 @@ int xhci_halt(struct xhci_hcd *xhci)
+ {
+ 	int ret;
+ 	xhci_dbg_trace(xhci, trace_xhci_dbg_init, "// Halt the HC");
++
++	if (xhci->quirks & XHCI_HALT_DELAY_QUIRK)
++		msleep(2);
++
+ 	xhci_quiesce(xhci);
+ 
+ 	ret = xhci_handshake(&xhci->op_regs->status,
+diff --git a/drivers/usb/host/xhci.h b/drivers/usb/host/xhci.h
+index b2c1dc5dc0f3..7e867bc6cff4 100644
+--- a/drivers/usb/host/xhci.h
++++ b/drivers/usb/host/xhci.h
+@@ -1631,6 +1631,14 @@ struct xhci_hcd {
+ /* For controllers with a broken beyond repair streams implementation */
+ #define XHCI_BROKEN_STREAMS	(1 << 19)
+ #define XHCI_PME_STUCK_QUIRK	(1 << 20)
++#define XHCI_MTK_HOST		(1 << 21)
++#define XHCI_SSIC_PORT_UNUSED	(1 << 22)
++#define XHCI_NO_64BIT_SUPPORT	(1 << 23)
++/*
++* TI TUSB 73x0 USB3.0 xHCI host errata SLLZ076 item 10 requies >= 2ms between
++* the last control transfer and clearing the run/stop bit
++*/
++#define XHCI_HALT_DELAY_QUIRK	(1 << 24)
+ 	unsigned int		num_active_eps;
+ 	unsigned int		limit_active_eps;
+ 	/* There are two roothubs to keep track of bus suspend info for */
+-- 
+2.10.2
+

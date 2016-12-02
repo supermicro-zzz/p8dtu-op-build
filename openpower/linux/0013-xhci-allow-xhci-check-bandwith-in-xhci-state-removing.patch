@@ -1,0 +1,38 @@
+From 0fa197df1d5836567f89e70018de8148576dfe25 Mon Sep 17 00:00:00 2001
+From: Jeremy Kerr <jk@ozlabs.org>
+Date: Thu, 1 Dec 2016 18:15:59 +0800
+Subject: [PATCH] usb/xhci: allow xhci_check_bandwith in XHCI_STATE_REMOVING
+
+Change 98d74f9ce (and backported as 0eb1e16bf9) introduced
+XHCI_STATE_REMOVING, where PCI XHCI HCDs are flagged as removing dring
+pci->remove. This included a check in xhci_check_bandwith to supress any
+configuration changes while the hcd is in this state.
+
+However, it looks like some controllers hang during halt if we haven't
+set configration 0 (via usb_hcd_alloc_bandwidth()).
+
+This change allows the configuration 0 update while removing.
+
+[This may be specific to our XHCI hacks for kexec...]
+
+Signed-off-by: Jeremy Kerr <jk@ozlabs.org>
+---
+ drivers/usb/host/xhci.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/usb/host/xhci.c b/drivers/usb/host/xhci.c
+index ec92a84..db55711 100644
+--- a/drivers/usb/host/xhci.c
++++ b/drivers/usb/host/xhci.c
+@@ -2770,8 +2770,7 @@ int xhci_check_bandwidth(struct usb_hcd *hcd, struct usb_device *udev)
+ 	if (ret <= 0)
+ 		return ret;
+ 	xhci = hcd_to_xhci(hcd);
+-	if ((xhci->xhc_state & XHCI_STATE_DYING) ||
+-		(xhci->xhc_state & XHCI_STATE_REMOVING))
++	if (xhci->xhc_state & XHCI_STATE_DYING)
+ 		return -ENODEV;
+ 
+ 	xhci_dbg(xhci, "%s called for udev %p\n", __func__, udev);
+--
+2.10.2
