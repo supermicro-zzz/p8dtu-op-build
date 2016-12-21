@@ -5,7 +5,7 @@
 ################################################################################
 
 SB_SIGNING_UTILS_SITE ?= $(call github,bofferdn,sb-signing-utils,$(SB_SIGNING_UTILS_VERSION))
-SB_SIGNING_UTILS_VERSION ?= e2d5412ffb74b317353373e48860b2a78b437089
+SB_SIGNING_UTILS_VERSION ?= a3b64a1fab88f8ac3e951123ef74cc3197b462cd
 
 SB_SIGNING_UTILS_LICENSE = Apache-2.0
 SB_SIGNING_UTILS_LICENSE_FILES = LICENSE
