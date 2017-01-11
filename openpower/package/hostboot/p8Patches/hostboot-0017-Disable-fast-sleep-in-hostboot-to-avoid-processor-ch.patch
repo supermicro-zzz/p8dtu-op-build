@@ -1,0 +1,26 @@
+From abebe24be910f8b433f47bef52861ca0f22f93a9 Mon Sep 17 00:00:00 2001
+From: jim <jim.yuan@supermicro.com>
+Date: Tue, 10 Jan 2017 16:16:14 -0800
+Subject: [PATCH] Disable fast-sleep in hostboot to avoid processor checkstop
+ with resonant clocking enabled. Github #401.
+
+---
+ src/usr/devtree/bld_devtree.C | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/usr/devtree/bld_devtree.C b/src/usr/devtree/bld_devtree.C
+index 227599e..516169e 100644
+--- a/src/usr/devtree/bld_devtree.C
++++ b/src/usr/devtree/bld_devtree.C
+@@ -1645,7 +1645,7 @@ errlHndl_t bld_fdt_system(devTree * i_dt, bool i_smallTree)
+     //Common settings
+     /* Define supported power states -- options:
+                          nap, deep-sleep, fast-sleep, rvwinkle*/
+-    const char* pmode_compatStrs[] = {"nap", "fast-sleep", "rvwinkle", NULL};
++    const char* pmode_compatStrs[] = {"nap", "rvwinkle", NULL};
+     i_dt->addPropertyStrings(rootNode, "ibm,enabled-idle-states",
+                              pmode_compatStrs);
+ 
+-- 
+2.9.2.windows.1
+
