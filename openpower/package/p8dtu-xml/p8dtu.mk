@@ -3,7 +3,7 @@
 # P8dtu_xml
 #
 ################################################################################
-P8DTU_XML_VERSION ?= 40aa4d441b689063630a20ad6dcd83954ae80d15
+P8DTU_XML_VERSION ?= 9a8fee2c075c69e92fe56a72ac7ff3748017669e
 P8DTU_XML_SITE_METHOD = git
 P8DTU_XML_SITE = git@172.31.32.149:openpower/p8dtu-xml.git
 #P8DTU_XML_SITE ?= $(call github,open-power,firestone-xml,$(FIRESTONE_XML_VERSION))
