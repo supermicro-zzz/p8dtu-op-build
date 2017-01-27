@@ -1,0 +1,525 @@
+From 955cfd279b8680eafd2dca2ccb615f58951d2595 Mon Sep 17 00:00:00 2001
+From: MENG ZE LIAO <liaomz@cn.ibm.com>
+Date: Mon, 16 Jan 2017 21:16:07 -0600
+Subject: [PATCH] Provide SN in devtree
+
+Change-Id: I3000f43f5085e9b10ad7681516fc65fcd4cb2057
+Reviewed-on: http://ralgit01.raleigh.ibm.com/gerrit1/35329
+Reviewed-by: Daniel M. Crowell <dcrowell@us.ibm.com>
+Reviewed-by: Prachi Gupta <pragupta@us.ibm.com>
+Tested-by: Jenkins Server <pfd-jenkins+hostboot@us.ibm.com>
+Tested-by: FSP CI Jenkins <fsp-CI-jenkins+hostboot@us.ibm.com>
+Tested-by: Jenkins OP Build CI <op-jenkins+hostboot@us.ibm.com>
+Tested-by: Jenkins OP HW <op-hw-jenkins+hostboot@us.ibm.com>
+Reviewed-by: William G. Hoffa <wghoffa@us.ibm.com>
+
+---
+ src/include/usr/ipmi/ipmifruinv.H |  17 +++++-
+ src/include/usr/ipmi/ipmiif.H     |   6 +-
+ src/usr/devtree/HBconfig          |   6 ++
+ src/usr/devtree/bld_devtree.C     |  19 +++++-
+ src/usr/ipmi/ipmifru.C            | 124 +++++++++++++++++++++++++++++++++++++-
+ src/usr/ipmi/ipmifru.H            |  25 +++++++-
+ src/usr/ipmi/ipmifruinv.C         |  85 +++++++++++++++++++++++++-
+ src/usr/ipmi/ipmifruinvprvt.H     |  10 ++-
+ 8 files changed, 279 insertions(+), 13 deletions(-)
+
+diff --git a/src/include/usr/ipmi/ipmifruinv.H b/src/include/usr/ipmi/ipmifruinv.H
+index 0df7246..50a6aad 100644
+--- a/src/include/usr/ipmi/ipmifruinv.H
++++ b/src/include/usr/ipmi/ipmifruinv.H
+@@ -5,7 +5,7 @@
+ /*                                                                        */
+ /* OpenPOWER HostBoot Project                                             */
+ /*                                                                        */
+-/* Contributors Listed Below - COPYRIGHT 2014,2015                        */
++/* Contributors Listed Below - COPYRIGHT 2014,2017                        */
+ /* [+] International Business Machines Corp.                              */
+ /*                                                                        */
+ /*                                                                        */
+@@ -39,6 +39,13 @@ namespace IPMIFRUINV
+      */
+     void setData(bool i_updateData=false);
+ 
++   /**
++    * @brief Reads the entire FRU inventory record
++    * @param[in] deviceId, The Record number to be read
++    * @param[o_data] The resultant pointer to the record data read
++   */
++    void readFruData(uint8_t i_deviceId, uint8_t *o_data);
++
+     /**
+      * @brief Clears fru data from BMC
+      * @param[in] fruId, The fruId to be cleared
+@@ -70,6 +77,14 @@ namespace IPMIFRUINV
+                                                                io_potentialFrus,
+                                   bool i_updateData);
+ 
++    /**
++     * @brief Reads the Serial Number of the Product Info Area and returns it
++     * @param[in] fruId, The Record number to be read
++     * @return the pointer with the serial number - The caller is required
++     *    to clear up this memory
++     */
++    char* getProductSN(uint8_t i_fruId);
++
+ };
+ 
+ #endif
+diff --git a/src/include/usr/ipmi/ipmiif.H b/src/include/usr/ipmi/ipmiif.H
+index 0e8fbea..d68e528 100644
+--- a/src/include/usr/ipmi/ipmiif.H
++++ b/src/include/usr/ipmi/ipmiif.H
+@@ -5,7 +5,7 @@
+ /*                                                                        */
+ /* OpenPOWER HostBoot Project                                             */
+ /*                                                                        */
+-/* Contributors Listed Below - COPYRIGHT 2012,2016                        */
++/* Contributors Listed Below - COPYRIGHT 2012,2017                        */
+ /* [+] International Business Machines Corp.                              */
+ /*                                                                        */
+ /*                                                                        */
+@@ -244,8 +244,8 @@ namespace IPMI
+     inline const command_t set_sel_time(void)
+     { return std::make_pair(NETFUN_STORAGE, 0x49); }
+ 
+-	inline const command_t read_fru_data(void)
+-	{ return std::make_pair(NETFUN_STORAGE, 0x11); }	
++    inline const command_t read_fru_data(void)
++    { return std::make_pair(NETFUN_STORAGE, 0x11); }
+ 
+     inline const command_t write_fru_data(void)
+     { return std::make_pair(NETFUN_STORAGE, 0x12); }
+diff --git a/src/usr/devtree/HBconfig b/src/usr/devtree/HBconfig
+index 3ce7d2c..be3ab76 100644
+--- a/src/usr/devtree/HBconfig
++++ b/src/usr/devtree/HBconfig
+@@ -5,3 +5,9 @@ config DISABLE_HOSTBOOT_RUNTIME
+         Disable the Hostboot Runtime (HBRT)
+ # Was default y if !HAVE_MBVPD
+ # Story 116907 Enable HBRT for OpenPower
++
++config BMC_SERIAL
++    default n
++    help
++        Read Planar serial number from BMC
++        via IPMI FRU Record 0
+diff --git a/src/usr/devtree/bld_devtree.C b/src/usr/devtree/bld_devtree.C
+index 516169e..e6810d1 100644
+--- a/src/usr/devtree/bld_devtree.C
++++ b/src/usr/devtree/bld_devtree.C
+@@ -5,7 +5,7 @@
+ /*                                                                        */
+ /* OpenPOWER HostBoot Project                                             */
+ /*                                                                        */
+-/* Contributors Listed Below - COPYRIGHT 2013,2016                        */
++/* Contributors Listed Below - COPYRIGHT 2013,2017                        */
+ /* [+] Google Inc.                                                        */
+ /* [+] International Business Machines Corp.                              */
+ /*                                                                        */
+@@ -53,6 +53,7 @@
+ #include <secureboot/trustedbootif.H>
+ #include <secureboot/service.H>
+ #include <ipmi/ipmisensor.H>
++#include <ipmi/ipmifruinv.H>
+ #include <fapi.H>
+ #include <fapiPlatHwpInvoker.H> // for fapi::fapiRcToErrl()
+ #include <vpd/mvpdenums.H>
+@@ -1856,8 +1857,22 @@ errlHndl_t bld_fdt_system(devTree * i_dt, bool i_smallTree)
+             TARGETING::ATTR_SERIAL_NUMBER_type l_sn = {'\0'};
+             l_pNode->tryGetAttr<TARGETING::ATTR_SERIAL_NUMBER>(l_sn);
+             str_chomp(reinterpret_cast<char*>(&l_sn[0]));
+-            i_dt->addPropertyString(rootNode, "serial-number",
++            i_dt->addPropertyString(rootNode, "ibm,board-serial-number",
+                                     reinterpret_cast<char*>(&l_sn[0]));
++
++            #ifdef CONFIG_BMC_SERIAL
++              #ifdef CONFIG_BMC_IPMI
++                //Get Product Serial Number from Backplane
++                char* l_sn_prod = NULL;
++                l_sn_prod = IPMIFRUINV::getProductSN(0);
++                i_dt->addPropertyString(rootNode, "serial-number",
++                                         reinterpret_cast<char*>(l_sn_prod));
++                //getProductSN requires the caller to delete the char array
++                delete[] l_sn_prod;
++                l_sn_prod = NULL;
++              #endif
++            #endif
++
+         }
+         // just delete any errors we get, this isn't critical
+         if( errhdl )
+diff --git a/src/usr/ipmi/ipmifru.C b/src/usr/ipmi/ipmifru.C
+index 4082f5b..621a1cd 100644
+--- a/src/usr/ipmi/ipmifru.C
++++ b/src/usr/ipmi/ipmifru.C
+@@ -5,7 +5,7 @@
+ /*                                                                        */
+ /* OpenPOWER HostBoot Project                                             */
+ /*                                                                        */
+-/* Contributors Listed Below - COPYRIGHT 2014,2015                        */
++/* Contributors Listed Below - COPYRIGHT 2014,2017                        */
+ /* [+] International Business Machines Corp.                              */
+ /*                                                                        */
+ /*                                                                        */
+@@ -48,6 +48,7 @@ extern trace_desc_t * g_trac_ipmi;
+ #ifdef CONFIG_BMC_IPMI
+ 
+ const uint8_t writeDataHeader = 3;
++const uint8_t readDataCmd     = 4;
+ 
+ /**
+  * setup _start and handle barrier
+@@ -107,6 +108,11 @@ void IpmiFRU::execute(void)
+                 // done with the msg
+                 msg_free(msg);
+                 break;
++
++            case IPMIFRU::MSG_READ_FRU_DATA:
++                sendReadFruData(msg);
++                msg_respond(iv_msgQ, msg);
++                break;
+             };
+         } // while
+     } while (false);
+@@ -191,6 +197,79 @@ void IpmiFRU::sendWriteFruData(msg_t *i_msg)
+     return;
+ } // sendWriteFruData
+ 
++void IpmiFRU::sendReadFruData(msg_t *i_msg)
++{
++    errlHndl_t err = NULL;
++
++    const uint8_t &l_deviceId = (i_msg->data[0] >> 32);
++    uint16_t l_offset = (i_msg->data[0] & 0xFFFFFFFF);
++    size_t l_dataSize = i_msg->data[1]; // FRU data size
++    uint8_t *l_data = static_cast<uint8_t*>(i_msg->extra_data);
++
++    uint16_t l_dataOffset = 0; // start at the l_data[0]
++    size_t l_fruSize = 0;
++
++    //TODO RTC 167956
++    const size_t l_maxBuffer = 16;
++
++    IPMI_TRAC(ENTER_MRK "sendReadFruData for dev 0x%x, size %d",
++                l_deviceId, l_dataSize);
++
++    while ((l_dataSize > 0) && (err == NULL))
++    {
++        size_t this_size = readDataCmd;
++        uint8_t *this_data = new uint8_t[this_size];
++
++        l_fruSize = std::min(l_dataSize, l_maxBuffer); // read data size
++
++        // copy device ID, offset, fru data to new buffer
++        this_data[0] = l_deviceId;
++        this_data[1] = l_offset & 0xFF;
++        this_data[2] = l_offset >> 8;
++        this_data[3] = l_fruSize;
++
++        IPMI_TRAC(INFO_MRK "sending read_fru_data fru size %d offset %d, "
++                           "data offset %d",
++                           l_fruSize, l_offset, l_dataOffset);
++
++        IPMI::completion_code cc = IPMI::CC_UNKBAD;
++        err = IPMI::sendrecv(IPMI::read_fru_data(), cc, this_size, this_data);
++        if (err)
++        {
++            IPMI_TRAC(ERR_MRK "Failed to send read_fru_data dev 0x%x",
++                    l_deviceId);
++            // err is set, so we'll break out of the while loop
++        }
++        else if (cc != IPMI::CC_OK)
++        {
++            IPMI_TRAC(ERR_MRK "Failed to send read_fru_data dev 0x%x CC 0x%x",
++                    l_deviceId, cc);
++            // stop sending; breaks out of the while loop
++            l_dataSize = 0;
++        } else {
++            this_size = this_data[0];
++            this_size = std::min(this_size, l_dataSize);
++            memcpy(l_data + l_dataOffset, &this_data[1], this_size);
++            // update the offsets for the next time around
++            l_offset += l_fruSize;
++            l_dataOffset += l_fruSize;
++            l_dataSize -= l_fruSize;
++        }
++
++        //  delete the buffer returned from sendrecv
++        delete [] this_data;
++    }
++
++    if (err)
++    {
++        err->collectTrace(IPMI_COMP_NAME);
++        errlCommit(err, IPMI_COMP_ID);
++    }
++
++    return;
++} // sendReadFruData
++
++
+ namespace IPMIFRU
+ {
+     ///
+@@ -232,5 +311,48 @@ namespace IPMIFRU
+         return;
+     } // writeData
+ 
++    void readData(uint8_t i_deviceId, uint8_t *io_data)
++    {
++        IPMI_TRAC(ENTER_MRK "readData(deviceId 0x%x", i_deviceId);
++
++        // one message queue to the FRU thread
++        static msg_q_t mq = Singleton<IpmiFRU>::instance().msgQueue();
++        uint32_t i_offset = 0;
++        size_t i_dataSize = IPMIFRU::MAX_RECORD_SIZE;
++
++        // send data in msg to fru thread
++        msg_t *msg = msg_allocate();
++
++        msg->type = MSG_READ_FRU_DATA;
++        msg->data[0] = (static_cast<uint64_t>(i_deviceId) << 32) | i_offset;
++        msg->data[1] = i_dataSize;
++
++        //Setup data structure to pass in message to read FRU record
++        uint8_t *l_data = new uint8_t[i_dataSize];
++        memset(l_data, 0, i_dataSize);
++        memset(io_data, 0, i_dataSize);
++        msg->extra_data = l_data;
++
++        //Send the msg (sync) to the fru thread
++        int rc = msg_sendrecv(mq, msg);
++
++        //Return code is non-zero when the message queue is invalid
++        //or the message type is invalid.
++        if ( rc )
++        {
++            IPMI_TRAC(ERR_MRK "Failed (rc=%d) to send message to read"
++                              "FRU Inventory Record: %d",
++                              rc, i_deviceId);
++            delete [] l_data; // delete, since msg wasn't sent
++            return;
++        }
++
++        //Copy data from local data structure to output data structure
++        memcpy(&io_data[0], l_data, i_dataSize);
++        msg_free(msg);
++
++        return;
++    }
++
+ }; // IPMIFRU namespace
+ #endif // CONFIG_BMC_IPMI
+diff --git a/src/usr/ipmi/ipmifru.H b/src/usr/ipmi/ipmifru.H
+index 47e0459..b0251f0 100644
+--- a/src/usr/ipmi/ipmifru.H
++++ b/src/usr/ipmi/ipmifru.H
+@@ -5,7 +5,7 @@
+ /*                                                                        */
+ /* OpenPOWER HostBoot Project                                             */
+ /*                                                                        */
+-/* Contributors Listed Below - COPYRIGHT 2014                             */
++/* Contributors Listed Below - COPYRIGHT 2014,2017                        */
+ /* [+] International Business Machines Corp.                              */
+ /*                                                                        */
+ /*                                                                        */
+@@ -34,6 +34,8 @@
+ #include <stdint.h>
+ #include <ipmi/ipmiif.H>
+ #include "ipmibt.H"
++#include <console/consoleif.H>
++
+ 
+ /**
+  *
+@@ -44,12 +46,23 @@ namespace IPMIFRU
+     void writeData(uint8_t i_deviceId, uint8_t *i_data,
+             uint32_t i_dataSize, uint32_t i_offset = 0);
+ 
++    /*
++     * @brief Read the IPMI FRU Record
++     * @param[in] deviceId - The device ID to be read
++     * @param[in/out] data - The buffer pointing to the data read
++     */
++    void readData(uint8_t i_deviceId, uint8_t *io_data);
++
+     enum msg_type
+     {
+         MSG_WRITE_FRU_DATA, // async message - no reply
+-
++        MSG_READ_FRU_DATA,  // sync message  - has reply
+         // Used to check range. Leave as last.
+-        MSG_LAST_TYPE = MSG_WRITE_FRU_DATA,
++        MSG_LAST_TYPE = MSG_READ_FRU_DATA,
++    };
++    enum record_info
++    {
++        MAX_RECORD_SIZE = 256,
+     };
+ }
+ 
+@@ -96,6 +109,12 @@ class IpmiFRU
+     void sendWriteFruData(msg_t *i_msg);
+ 
+     /**
++     * @brief Handle a message with fru inventory data; msg is sync
++     * #param[in] i_msg
++     */
++    void sendReadFruData(msg_t *i_msg);
++
++    /**
+      * ipmi fru msg queue
+      */
+     msg_q_t iv_msgQ;
+diff --git a/src/usr/ipmi/ipmifruinv.C b/src/usr/ipmi/ipmifruinv.C
+index bbc3cb9..8748dc9 100644
+--- a/src/usr/ipmi/ipmifruinv.C
++++ b/src/usr/ipmi/ipmifruinv.C
+@@ -5,7 +5,7 @@
+ /*                                                                        */
+ /* OpenPOWER HostBoot Project                                             */
+ /*                                                                        */
+-/* Contributors Listed Below - COPYRIGHT 2014,2016                        */
++/* Contributors Listed Below - COPYRIGHT 2014,2017                        */
+ /* [+] International Business Machines Corp.                              */
+ /*                                                                        */
+ /*                                                                        */
+@@ -39,6 +39,7 @@
+ #include <stdio.h>
+ #include <assert.h>
+ #include <pnor/pnorif.H>
++#include <console/consoleif.H>
+ 
+ extern trace_desc_t * g_trac_ipmi;
+ 
+@@ -802,7 +803,6 @@ errlHndl_t backplaneIpmiFruInv::buildBoardInfoArea(
+         //io_data.push_back(0x9A);
+         //io_data.push_back(0xA3);
+ 
+-
+         //Set Vendor Name - ascii formatted data
+         l_errl = addVpdData(io_data, PVPD::OPFR, PVPD::VN, true);
+         if (l_errl) { break; }
+@@ -1585,6 +1585,87 @@ void IPMIFRUINV::setData(bool i_updateData)
+     return;
+ }
+ 
++void IPMIFRUINV::readFruData(uint8_t i_deviceId, uint8_t *o_data)
++{
++    //Use IMPIFRU::readData to send data to service processor
++    // it will do any error handling and memory management
++    IPMIFRU::readData(i_deviceId, o_data);
++}
++
++char * IPMIFRUINV::getProductSN(uint8_t i_deviceId)
++{
++    //If we cannot read the product serial number, default is 0's (set below)
++    char * l_prodSN = NULL;
++
++    //First read the entire record that contains the SN
++    uint8_t *l_record = new uint8_t[IPMIFRU::MAX_RECORD_SIZE];
++    memset(l_record, 0, IPMIFRU::MAX_RECORD_SIZE);
++    readFruData(i_deviceId, l_record);
++
++    do {
++
++        //Code only supports version 1 of the FRU spec if for whatever reason
++        //  we didn't get data, this would be 0
++        if (l_record[IPMIFRUINV::HEADER_FORMART_VERSION]
++                                       != IPMIFRUINV::SPEC_VERSION)
++        {
++            TRACFCOMP(g_trac_ipmi, "FW does not support IPMI FRU Version: %d",
++                        l_record[1]);
++            break;
++        }
++
++        //Get the offset in the record pointed to the product info area
++        //  (where the SN is located)
++        uint8_t l_prodInfoOffset = l_record[IPMIFRUINV::PRODUCT_INFO_AREA];
++
++        if (l_prodInfoOffset == IPMIFRUINV::RECORD_NOT_PRESENT)
++        {
++            TRACFCOMP(g_trac_ipmi, "Product Info Area Not present "
++                        "- returning empty SN");
++            break;
++        }
++
++        //Start at the beginning of the Product Info Record and traverse to the
++        // serial number entry
++        uint8_t l_prodIndex = l_prodInfoOffset * RECORD_UNIT_OF_MEASUREMENT;
++        l_prodIndex += 3; //Version, Length Byte, Language Code
++
++        //MFG NAME Length + TYPELENGTH Byte
++        l_prodIndex += ((TYPELENGTH_SIZE_MASK&l_record[l_prodIndex]) + 1);
++
++        //Prod NAME Length + TYPELENGTH Byte
++        l_prodIndex += ((TYPELENGTH_SIZE_MASK&l_record[l_prodIndex]) + 1);
++
++        //Prod Part/Model Number Length + TYPELENGTH Byte
++        l_prodIndex += ((TYPELENGTH_SIZE_MASK&l_record[l_prodIndex]) + 1);
++
++        //Prod Version Length + TYPELEGNTH Byte
++        l_prodIndex += ((TYPELENGTH_SIZE_MASK&l_record[l_prodIndex]) + 1);
++
++        //Serial number located after Prod Version
++        uint8_t l_prodSNOffset = l_prodIndex;
++        uint8_t l_prodSNsize = TYPELENGTH_SIZE_MASK&l_record[l_prodSNOffset];
++
++        //Grab Serial Number as char array
++        l_prodSN = new char[l_prodSNsize+1];
++        memcpy(l_prodSN, &l_record[l_prodSNOffset+1], l_prodSNsize);
++        l_prodSN[l_prodSNsize] = '\0';
++
++        //Can skip the rest.
++
++    } while (0);
++
++    if (l_prodSN == NULL)
++    {
++        l_prodSN = new char[9];
++        memset(l_prodSN, 0, 8);
++        l_prodSN[8] = '\0';
++    }
++
++    delete[] l_record;
++
++    return l_prodSN;
++}
+ 
+ void IPMIFRUINV::gatherClearData(const TARGETING::Target* i_pSys,
+                                     std::map<uint8_t,bool>& io_frusToClear)
+diff --git a/src/usr/ipmi/ipmifruinvprvt.H b/src/usr/ipmi/ipmifruinvprvt.H
+index 0075d90..13ee4e7 100644
+--- a/src/usr/ipmi/ipmifruinvprvt.H
++++ b/src/usr/ipmi/ipmifruinvprvt.H
+@@ -5,7 +5,7 @@
+ /*                                                                        */
+ /* OpenPOWER HostBoot Project                                             */
+ /*                                                                        */
+-/* Contributors Listed Below - COPYRIGHT 2014,2016                        */
++/* Contributors Listed Below - COPYRIGHT 2014,2017                        */
+ /* [+] International Business Machines Corp.                              */
+ /*                                                                        */
+ /*                                                                        */
+@@ -42,9 +42,17 @@ namespace IPMIFRUINV
+         COMMON_HEADER_FORMAT_SIZE     = 8, //size in bytes
+         DEFAULT_CHASSIS_TYPE          = 0x05,
+         DEFAULT_FRU_OFFSET            = 0,
++        TYPELENGTH_SIZE_MASK          = 0x3F, //bits 5:0 define num data bytes
+         MAX_ASCII_FIELD_SIZE          = 0x3F, //size in bytes
+         MAX_RECORD_SIZE               = 0xFF, //size in bytes
+     };
++
++    enum commonHeaderEntryOffsets
++    {
++        HEADER_FORMART_VERSION = 0,
++        PRODUCT_INFO_AREA      = 4,
++    };
++
+ };
+ 
+ 
+-- 
+2.9.2.windows.1
+
