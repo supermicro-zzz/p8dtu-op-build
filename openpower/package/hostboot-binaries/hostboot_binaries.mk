@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-HOSTBOOT_BINARIES_VERSION ?= 8844c618fe29fe6dd5ccb314146ec3a440a3b57a
+HOSTBOOT_BINARIES_VERSION ?= ba436f69dba6d4e5518da2f7151370624c5549d2
 HOSTBOOT_BINARIES_SITE ?= $(call github,bofferdn,hostboot-binaries,$(HOSTBOOT_BINARIES_VERSION))
 HOSTBOOT_BINARIES_LICENSE = Apache-2.0
 
