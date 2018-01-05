@@ -1,0 +1,59 @@
+From 484293338dcde504dd59c4bf2a1a99b9e789e2a6 Mon Sep 17 00:00:00 2001
+From: Oliver O'Halloran <oohall@gmail.com>
+Date: Thu, 12 Jan 2017 14:54:08 +1100
+Subject: [PATCH 1/5] dt: add dt_new_check()
+
+This is similar to dt_new(), but if the node already exists it will
+return the existing node. This is useful because some init code depends
+on the presence of certain nodes, but where the node is actually created
+is unimportant.
+
+Signed-off-by: Oliver O'Halloran <oohall@gmail.com>
+Reviewed-by: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+Reviewed-by: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+Signed-off-by: Stewart Smith <stewart@linux.vnet.ibm.com>
+---
+ core/device.c    | 14 ++++++++++++++
+ include/device.h |  1 +
+ 2 files changed, 15 insertions(+)
+
+diff --git a/core/device.c b/core/device.c
+index 63b5df8..a9c7ebe 100644
+--- a/core/device.c
++++ b/core/device.c
+@@ -352,6 +352,20 @@ struct dt_node *dt_find_by_name(struct dt_node *root, const char *name)
+ 	return NULL;
+ }
+ 
++
++struct dt_node *dt_new_check(struct dt_node *parent, const char *name)
++{
++	struct dt_node *node = dt_find_by_name(parent, name);
++
++	if (!node) {
++		node = dt_new(parent, name);
++		assert(node);
++	}
++
++	return node;
++}
++
++
+ struct dt_node *dt_find_by_phandle(struct dt_node *root, u32 phandle)
+ {
+ 	struct dt_node *node;
+diff --git a/include/device.h b/include/device.h
+index 4198a41..1ad403f 100644
+--- a/include/device.h
++++ b/include/device.h
+@@ -67,6 +67,7 @@ struct dt_node *dt_new_addr(struct dt_node *parent, const char *name,
+ 			    uint64_t unit_addr);
+ struct dt_node *dt_new_2addr(struct dt_node *parent, const char *name,
+ 			     uint64_t unit_addr0, uint64_t unit_addr1);
++struct dt_node *dt_new_check(struct dt_node *parent, const char *name);
+ 
+ /* Copy node to new parent, including properties and subnodes */
+ struct dt_node *dt_copy(struct dt_node *node, struct dt_node *parent);
+-- 
+2.9.2.windows.1
+

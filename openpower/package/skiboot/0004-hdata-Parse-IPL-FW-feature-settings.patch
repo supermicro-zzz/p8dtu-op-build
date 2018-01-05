@@ -1,0 +1,110 @@
+From 23ba4cc9db0c61211c3520f0fd13c6324c77a688 Mon Sep 17 00:00:00 2001
+From: Oliver O'Halloran <oohall@gmail.com>
+Date: Wed, 13 Dec 2017 11:41:47 +1100
+Subject: [PATCH 4/5] hdata: Parse IPL FW feature settings
+
+Add parsing for the firmware feature information in the HDAT. This
+indicates the settings of various firmware controlled parameters which
+the host operating system kernel (or system administrator) may wish to
+know about.
+
+Cc: stable # 5.4.x 371e88e23662 eeba2d64fb7a 0abc3af7e8f6
+Signed-off-by: Oliver O'Halloran <oohall@gmail.com>
+---
+ hdata/spira.c | 47 +++++++++++++++++++++++++++++++++++++++++++++++
+ hdata/spira.h |  7 +++++++
+ 2 files changed, 54 insertions(+)
+
+diff --git a/hdata/spira.c b/hdata/spira.c
+index 592197e..428b3e0 100644
+--- a/hdata/spira.c
++++ b/hdata/spira.c
+@@ -14,6 +14,7 @@
+  * limitations under the License.
+  */
+ 
++#include <inttypes.h>
+ #include <device.h>
+ #include "spira.h"
+ #include <cpu.h>
+@@ -916,6 +917,51 @@ static void add_iplparams_platform_dump(const void *iplp, struct dt_node *node)
+ 	}
+ }
+ 
++static void add_iplparams_features(const struct HDIF_common_hdr *iplp)
++{
++	const struct iplparams_feature *feature;
++	const struct HDIF_array_hdr *array;
++	struct dt_node *fw_features;
++	unsigned int count, i;
++	char name[65];
++
++	array = HDIF_get_iarray(iplp, IPLPARAMS_FEATURES, &count);
++	if (!array || !count)
++		return;
++
++	opal_node = dt_new_check(dt_root, "ibm,opal");
++	fw_features = dt_new(opal_node, "fw-features");
++	if (!fw_features)
++		return;
++
++	HDIF_iarray_for_each(array, i, feature) {
++		struct dt_node *n;
++		uint64_t flags;
++
++		/* the name field isn't necessarily null terminated */
++		strncpy(name, feature->name, sizeof(feature->name));
++		flags = be64_to_cpu(feature->flags);
++
++		prlog(PR_DEBUG, "IPLPARAMS: FW feature %s = %016"PRIx64"\n",
++				name, flags);
++
++		/* get rid of tm-suspend-mode-enabled being disabled */
++		if (strcmp(name, "tm-suspend-mode-enabled") == 0)
++			strcpy(name, "tm-suspend-mode");
++
++		n = dt_new(fw_features, name);
++
++		/*
++		 * This is a bit overkill, but we'll want seperate properties
++		 * for each flag bit(s).
++		 */
++		if (flags & PPC_BIT(0))
++			dt_add_property(n, "enabled", NULL, 0);
++		else
++			dt_add_property(n, "disabled", NULL, 0);
++	}
++}
++
+ static void add_iplparams(void)
+ {
+ 	struct dt_node *iplp_node;
+@@ -936,6 +982,7 @@ static void add_iplparams(void)
+ 	add_iplparams_ipl_params(ipl_parms, iplp_node);
+ 	add_iplparams_serials(ipl_parms, iplp_node);
+ 	add_iplparams_platform_dump(ipl_parms, iplp_node);
++	add_iplparams_features(ipl_parms);
+ }
+ 
+ /* Various structure contain a "proc_chip_id" which is an arbitrary
+diff --git a/hdata/spira.h b/hdata/spira.h
+index eabf7f9..7fdc2d0 100644
+--- a/hdata/spira.h
++++ b/hdata/spira.h
+@@ -380,6 +380,13 @@ struct iplparms_serial {
+ #define PLPARMS_SERIAL_FLAGS_CALLHOME	0x8000
+ } __packed;
+ 
++/* Idata index 9: FW features */
++#define IPLPARAMS_FEATURES	9
++struct iplparams_feature {
++	char name[64];
++	__be64 flags;
++} __packed;
++
+ /*
+  * Chip TOD structure
+  *
+-- 
+2.9.2.windows.1
+

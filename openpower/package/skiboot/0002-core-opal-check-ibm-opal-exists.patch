@@ -1,0 +1,37 @@
+From ab963ad597f62a44d4e061f477d5b4b2f8a7f8d8 Mon Sep 17 00:00:00 2001
+From: Oliver O'Halloran <oohall@gmail.com>
+Date: Wed, 8 Feb 2017 12:16:13 +1100
+Subject: [PATCH 2/5] core/opal: check ibm,opal exists
+
+The ibm,opal node is normally created by Skiboot either in the HDAT parser
+or after the input FDT has been unflattened. However, in order to supply
+the /ibm,opal/power-mgt/enabled-stop-states property FDT we to tolerate
+/ibm,opal/ existing in the input tree.
+
+Signed-off-by: Oliver O'Halloran <oohall@gmail.com>
+Acked-by: Michael Neuling <mikey@neuling.org>
+Signed-off-by: Stewart Smith <stewart@linux.vnet.ibm.com>
+---
+ core/opal.c | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+
+diff --git a/core/opal.c b/core/opal.c
+index 269ab80..bbf4a9d 100644
+--- a/core/opal.c
++++ b/core/opal.c
+@@ -153,11 +153,7 @@ void add_opal_node(void)
+ 	size = (CPU_STACKS_BASE +
+ 		(uint64_t)(cpu_max_pir + 1) * STACK_SIZE) - SKIBOOT_BASE;
+ 
+-	if (!opal_node) {
+-		opal_node = dt_new(dt_root, "ibm,opal");
+-		assert(opal_node);
+-	}
+-
++	opal_node = dt_new_check(dt_root, "ibm,opal");
+ 	dt_add_property_cells(opal_node, "#address-cells", 0);
+ 	dt_add_property_cells(opal_node, "#size-cells", 0);
+ 
+-- 
+2.9.2.windows.1
+

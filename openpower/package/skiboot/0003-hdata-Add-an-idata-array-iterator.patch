@@ -1,0 +1,130 @@
+From ccfbf04068e506b9dceb4bc400ba00183177c683 Mon Sep 17 00:00:00 2001
+From: Oliver O'Halloran <oohall@gmail.com>
+Date: Fri, 15 Sep 2017 15:40:55 +1000
+Subject: [PATCH 3/5] hdata: Add an idata array iterator
+
+Adds HDIF_get_iarray() which retrieves and validates an internal array
+header and HDIF_iarray_for_each() for walking the individual array
+entries. This reduces the amount of get-then-check boilerplate that
+we have with the existing HDIF_get_iarray_item() method for iterating
+internal data arrays.
+
+Signed-off-by: Oliver O'Halloran <oohall@gmail.com>
+Signed-off-by: Stewart Smith <stewart@linux.vnet.ibm.com>
+---
+ hdata/hdif.c | 69 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ hdata/hdif.h | 18 ++++++++++++++++
+ 2 files changed, 87 insertions(+)
+
+diff --git a/hdata/hdif.c b/hdata/hdif.c
+index 25c0000..a9b0e05 100644
+--- a/hdata/hdif.c
++++ b/hdata/hdif.c
+@@ -90,6 +90,75 @@ int HDIF_get_iarray_size(const struct HDIF_common_hdr *hdif, unsigned int di)
+ 	return be32_to_cpu(ahdr->ecnt);
+ }
+ 
++/*
++ * Returns NULL and sets *items to zero when:
++ *
++ * a) Array extends beyond bounds (hard error)
++ * b) The array is empty (soft error)
++ * c) The item size is zero (soft error)
++ * d) The array is missing (soft error)
++ *
++ * b, c) are bugs in the input data so they generate backtraces.
++ *
++ * If you care about the soft error cases, retrive the array header manually
++ * with HDIF_get_idata().
++ */
++const struct HDIF_array_hdr *HDIF_get_iarray(const struct HDIF_common_hdr *hdif,
++				unsigned int di, unsigned int *items)
++{
++	const struct HDIF_array_hdr *arr;
++	unsigned int req_size, size, elements;
++	unsigned int actual_sz, alloc_sz, offset;
++
++	arr = HDIF_get_idata(hdif, di, &size);
++
++	if(items)
++		*items = 0;
++
++	if (!arr || !size)
++		return NULL;
++
++	/* base size of an Idata array header */
++	offset = be32_to_cpu(arr->offset);
++	actual_sz = be32_to_cpu(arr->eactsz);
++	alloc_sz = be32_to_cpu(arr->esize);
++	elements = be32_to_cpu(arr->ecnt);
++
++	/* actual size should always be smaller than allocated */
++	if (alloc_sz < actual_sz) {
++		prerror("HDIF %.6s iarray %u has actsz (%u) < alloc_sz (%u)\n)",
++			hdif->id, di, actual_sz, alloc_sz);
++		backtrace();
++		return NULL;
++	}
++
++	req_size = elements * alloc_sz + offset;
++	if (req_size > size) {
++		prerror("HDIF: %.6s iarray %u requires %#x bytes, but only %#x are allocated!\n",
++			hdif->id, di, req_size, size);
++		backtrace();
++		return NULL;
++	}
++
++	if (!elements || !actual_sz)
++		return NULL;
++
++	if (items)
++		*items = elements;
++
++	return arr;
++}
++
++const void *HDIF_iarray_item(const struct HDIF_array_hdr *ahdr,
++				unsigned int index)
++{
++	if (!ahdr || index >= be32_to_cpu(ahdr->ecnt))
++		return NULL;
++
++	return (const void * )ahdr + be32_to_cpu(ahdr->offset) +
++			index * be32_to_cpu(ahdr->esize);
++}
++
+ struct HDIF_child_ptr *
+ HDIF_child_arr(const struct HDIF_common_hdr *hdif, unsigned int idx)
+ {
+diff --git a/hdata/hdif.h b/hdata/hdif.h
+index ef03522..447ef4b 100644
+--- a/hdata/hdif.h
++++ b/hdata/hdif.h
+@@ -105,6 +105,24 @@ extern const void *HDIF_get_iarray_item(const struct HDIF_common_hdr *hdif,
+ 					unsigned int di,
+ 					unsigned int ai, unsigned int *size);
+ 
++/* HDIF_get_iarray - Get a pointer to an internal array header
++ *
++ * @hdif  : HDIF structure pointer
++ * @di    : Index of the idata pointer
++ * @ai    : Index in the resulting array
++ * @size  : Return the entry actual size (or NULL if ignored)
++ */
++extern const struct HDIF_array_hdr *HDIF_get_iarray(
++		const struct HDIF_common_hdr *hdif, unsigned int di,
++		unsigned int *items);
++
++extern const void *HDIF_iarray_item(const struct HDIF_array_hdr *hdif,
++				unsigned int index);
++
++#define HDIF_iarray_for_each(arr, idx, ptr) \
++	for (idx = 0, ptr = HDIF_iarray_item(arr, idx); \
++		ptr; idx++, ptr = HDIF_iarray_item(arr, idx))
++
+ /* HDIF_get_iarray_size - Get the number of elements of an internal data array
+  *
+  * @hdif  : HDIF structure pointer
+-- 
+2.9.2.windows.1
+

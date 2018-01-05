@@ -1,0 +1,36 @@
+From 31aa88f0e33a093f908143e8106084f0cda77953 Mon Sep 17 00:00:00 2001
+From: Oliver O'Halloran <oohall@gmail.com>
+Date: Thu, 21 Dec 2017 12:24:52 +1100
+Subject: [PATCH 5/5] hdata: Fix build breakage
+
+One of the prerequisits for the previous patch breaks the build on
+5.4.x. This patch fixes that and is not required for upstream.
+
+Signed-off-by: Oliver O'Halloran <oohall@gmail.com>
+---
+ hdata/hdif.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/hdata/hdif.c b/hdata/hdif.c
+index a9b0e05..ce88f40 100644
+--- a/hdata/hdif.c
++++ b/hdata/hdif.c
+@@ -128,7 +128,6 @@ const struct HDIF_array_hdr *HDIF_get_iarray(const struct HDIF_common_hdr *hdif,
+ 	if (alloc_sz < actual_sz) {
+ 		prerror("HDIF %.6s iarray %u has actsz (%u) < alloc_sz (%u)\n)",
+ 			hdif->id, di, actual_sz, alloc_sz);
+-		backtrace();
+ 		return NULL;
+ 	}
+ 
+@@ -136,7 +135,6 @@ const struct HDIF_array_hdr *HDIF_get_iarray(const struct HDIF_common_hdr *hdif,
+ 	if (req_size > size) {
+ 		prerror("HDIF: %.6s iarray %u requires %#x bytes, but only %#x are allocated!\n",
+ 			hdif->id, di, req_size, size);
+-		backtrace();
+ 		return NULL;
+ 	}
+ 
+-- 
+2.9.2.windows.1
+
