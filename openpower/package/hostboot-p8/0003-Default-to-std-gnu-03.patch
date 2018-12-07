@@ -18,9 +18,9 @@ diff --git a/src/build/mkrules/cflags.env.mk b/src/build/mkrules/cflags.env.mk
 index c805999..0bae0ec 100644
 --- a/src/build/mkrules/cflags.env.mk
 +++ b/src/build/mkrules/cflags.env.mk
-@@ -41,7 +41,7 @@ CFLAGS += $(COMMONFLAGS) -mcpu=power7 -nostdinc -g -mno-vsx -mno-altivec\
- 	  -ffunction-sections -fdata-sections -ffreestanding -mbig-endian
- ASMFLAGS += $(COMMONFLAGS) -mcpu=power7 -mbig-endian
+@@ -43,7 +43,7 @@ CFLAGS += $(COMMONFLAGS) -mcpu=power7 -nostdinc -g -mno-vsx -mno-altivec\
+       -mabi=elfv1
+ ASMFLAGS += $(COMMONFLAGS) -mcpu=power7 -mbig-endian -mabi=elfv1
  CXXFLAGS += $(CFLAGS) -nostdinc++ -fno-rtti -fno-exceptions -Wall \
 -	    -fuse-cxa-atexit
 +	    -fuse-cxa-atexit -std=gnu++03

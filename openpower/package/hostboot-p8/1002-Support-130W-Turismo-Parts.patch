@@ -1,0 +1,39 @@
+From ac684b9d086209471458da9aeb9653b3c50b177e Mon Sep 17 00:00:00 2001
+From: jim <jim.yuan@supermicro.com>
+Date: Tue, 18 Oct 2016 16:12:21 -0700
+Subject: [PATCH 02/14] Support 130W Turismo Parts.
+
+---
+ src/usr/targeting/common/xmltohb/attribute_types.xml | 2 +-
+ src/usr/targeting/common/xmltohb/target_types.xml    | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/usr/targeting/common/xmltohb/attribute_types.xml b/src/usr/targeting/common/xmltohb/attribute_types.xml
+index d7fc183a4..0f0e2f6a7 100644
+--- a/src/usr/targeting/common/xmltohb/attribute_types.xml
++++ b/src/usr/targeting/common/xmltohb/attribute_types.xml
+@@ -15890,7 +15890,7 @@ firmware notes: Platforms should initialize this attribute to AUTO (0)</descript
+     <simpleType>
+         <enumeration>
+             <id>MRW_NEST_CAPABLE_FREQUENCIES_SYS</id>
+-            <default>UNSUPPORTED_FREQ</default>
++            <default>2000_MHZ_OR_2400_MHZ</default>
+         </enumeration>
+     </simpleType>
+     <persistency>non-volatile</persistency>
+diff --git a/src/usr/targeting/common/xmltohb/target_types.xml b/src/usr/targeting/common/xmltohb/target_types.xml
+index b28607ca2..a150ce64d 100644
+--- a/src/usr/targeting/common/xmltohb/target_types.xml
++++ b/src/usr/targeting/common/xmltohb/target_types.xml
+@@ -681,7 +681,7 @@
+     </attribute>
+     <attribute>
+         <id>DEFAULT_PROC_MODULE_NEST_FREQ_MHZ</id>
+-        <default>2400</default>
++        <default>2000</default>
+     </attribute>
+ </targetType>
+ 
+-- 
+2.16.2.windows.1
+
