@@ -3,9 +3,12 @@
 # hostboot for POWER8
 #
 ################################################################################
-HOSTBOOT_P8_VERSION ?= c35645e2d863e37a4356d141713e082505c51e94
+#HOSTBOOT_P8_VERSION ?= c35645e2d863e37a4356d141713e082505c51e94
+#HOSTBOOT_P8_SITE ?= $(call github,open-power,hostboot,$(HOSTBOOT_P8_VERSION))
 
-HOSTBOOT_P8_SITE ?= $(call github,open-power,hostboot,$(HOSTBOOT_P8_VERSION))
+HOSTBOOT_P8_VERSION ?= SMC
+HOSTBOOT_P8_SITE ?= /home/smc/ddr4/GA2/hostboot
+HOSTBOOT_P8_SITE_METHOD = local
 
 HOSTBOOT_P8_LICENSE = Apache-2.0
 HOSTBOOT_P8_LICENSE_FILES = LICENSE
