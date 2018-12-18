@@ -1,0 +1,39 @@
+From 4e21e362112fec6048807b9d683ac59f192cf386 Mon Sep 17 00:00:00 2001
+From: Andrew Jeffery <andrew@aj.id.au>
+Date: Mon, 17 Dec 2018 12:48:27 +1030
+Subject: [PATCH 2/2] p8dtu: Configure BMC graphics
+
+We can no-longer read the values from the BMC in the way we have in the
+past. Values were provided by Eric Chen of SMC.
+
+Signed-off-by: Andrew Jeffery <andrew@aj.id.au>
+---
+ platforms/astbmc/p8dtu.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/platforms/astbmc/p8dtu.c b/platforms/astbmc/p8dtu.c
+index b25a56d9c664..69500ea2bcee 100644
+--- a/platforms/astbmc/p8dtu.c
++++ b/platforms/astbmc/p8dtu.c
+@@ -233,9 +233,17 @@ static const struct bmc_sw_config bmc_sw_smc = {
+ 	.ipmi_oem_hiomap_cmd         = IPMI_CODE(0x3a, 0x5a),
+ };
+ 
++/* Provided by Eric Chen (SMC) */
++const struct bmc_hw_config p8dtu_bmc_hw = {
++	.scu_revision_id = 0x02010303,
++	.mcr_configuration = 0x00000577,
++	.mcr_scu_mpll = 0x000050c0,
++	.mcr_scu_strap = 0x00000000,
++};
++
+ static const struct bmc_platform bmc_plat_ast2400_smc = {
+ 	.name = "SMC",
+-	.hw = &bmc_hw_ast2400,
++	.hw = &p8dtu_bmc_hw,
+ 	.sw = &bmc_sw_smc,
+ };
+ 
+-- 
+2.19.1
+

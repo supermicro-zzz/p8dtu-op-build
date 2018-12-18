@@ -1,0 +1,25 @@
+From 1a76a048d09063ea1ffb617e5d0b295db5def3c4 Mon Sep 17 00:00:00 2001
+From: Andrew Jeffery <andrew@aj.id.au>
+Date: Mon, 17 Dec 2018 11:43:03 +1030
+Subject: [PATCH 1/2] p8dtu: Enable hiomap support
+
+Signed-off-by: Andrew Jeffery <andrew@aj.id.au>
+---
+ platforms/astbmc/p8dtu.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/platforms/astbmc/p8dtu.c b/platforms/astbmc/p8dtu.c
+index b5627d2c775d..b25a56d9c664 100644
+--- a/platforms/astbmc/p8dtu.c
++++ b/platforms/astbmc/p8dtu.c
+@@ -230,6 +230,7 @@ static bool p8dtu2u_probe(void)
+ static const struct bmc_sw_config bmc_sw_smc = {
+ 	.ipmi_oem_partial_add_esel   = IPMI_CODE(0x3a, 0xf0),
+ 	.ipmi_oem_pnor_access_status = IPMI_CODE(0x3a, 0x07),
++	.ipmi_oem_hiomap_cmd         = IPMI_CODE(0x3a, 0x5a),
+ };
+ 
+ static const struct bmc_platform bmc_plat_ast2400_smc = {
+-- 
+2.19.1
+
