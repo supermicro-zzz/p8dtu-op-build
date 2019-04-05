@@ -24,13 +24,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for howto contribute code.
 
 ## Building an image
 
-To build an image for a Palmetto system:
+To build an image for a P8DTU system:
 
 ```
 git clone --recursive git@github.com:open-power/op-build.git
 cd op-build
 . op-build-env
-op-build palmetto_defconfig && op-build
+op-build p8dtu_defconfig && op-build
 ```
 
 There are also default configurations for other platforms in
